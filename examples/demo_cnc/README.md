@@ -11,7 +11,40 @@
 
 This is a complete CNC HMI project **exported by QmlVcp Builder** after visual editing. You can run it directly, or use it as a template for your own project.
 
-## 快速开始 / Quick Start
+## 连接 LinuxCNC / Connecting to LinuxCNC
+
+本 QmlVcp 项目本质上是一个**独立 GUI 程序**，要让它接管 LinuxCNC 的显示，只需在 LinuxCNC 配置文件的 `[DISPLAY]` 段中指定 `start.sh` 的路径即可——与 Axs、Touchy、Gmoccapy 的用法完全相同。
+
+This QmlVcp project is a **standalone GUI**. To make LinuxCNC use it as the display, simply point `[DISPLAY]` to `start.sh` in your ini config — exactly the same way you'd use Axis, Touchy, or Gmoccapy.
+
+### 配置方法 / Configuration
+
+编辑你的 LinuxCNC 机器配置文件（通常位于 `~/linuxcnc/configs/<机器名>/<机器名>.ini`）：
+
+Edit your LinuxCNC machine config file (usually at `~/linuxcnc/configs/<machine_name>/<machine_name>.ini`)：
+
+```ini
+[DISPLAY]
+DISPLAY = /home/cnc/qmlvcp-projects/demo_cnc/start.sh
+```
+
+> **注意 / Note**：路径必须是**绝对路径**，指向本项目目录中的 `start.sh`。  
+> The path must be an **absolute path** pointing to `start.sh` inside this project directory.
+
+### start.sh 做了什么 / What start.sh does
+
+```bash
+#!/bin/bash
+cd "$(dirname "$0")"           # 进入项目目录
+source "../venv/bin/activate"  # 激活虚拟环境（可选）
+python3 -u main.py "$@"        # 启动界面，-ini 参数由 LinuxCNC 自动传入
+```
+
+LinuxCNC 启动时会**自动**将 ini 文件路径作为 `-ini` 参数传给 `start.sh`，QmlVcp 框架会解析 ini 配置、初始化 HAL 连接、挂载 NML 通信，无需手动干预。
+
+When LinuxCNC starts, it **automatically** passes the ini file path as a `-ini` argument to `start.sh`. The QmlVcp framework handles ini parsing, HAL initialization, and NML communication — no manual intervention needed.
+
+### 快速开始 / Quick Start
 
 ```bash
 # 1. 安装依赖
@@ -20,8 +53,10 @@ pip install PySide6>=6.5
 # 2. 独立预览模式（无 LinuxCNC 连接也能看界面）
 python main.py
 
-# 3. 连接真实 LinuxCNC
-python main.py -ini /path/to/linuxcnc.ini
+# 3. 模拟连接（用假 ini 测试 HAL 行为）
+python main.py -ini /path/to/test.ini
+
+# 4. 真实 LinuxCNC 环境：按照上面的方法配置 [DISPLAY]，直接启动 LinuxCNC 即可
 ```
 
 ## 文件结构 / File Structure

@@ -1,6 +1,6 @@
 # QmlVcp Builder — CNC 界面可视化拼装工具
 
-> WYSIWYG CNC GUI Builder for LinuxCNC / 所见即所得的 LinuxCNC 界面拼装工具
+> 可在 Windows 下开发，导出项目运行于 LinuxCNC / Develop on Windows, deploy on LinuxCNC
 
 [中文](#中文) | [English](#english)
 

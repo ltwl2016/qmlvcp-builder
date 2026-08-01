@@ -55,12 +55,15 @@ QmlVcp Builder 是一款**可视化**的 CNC 操作界面拼装工具，面向 L
 
 #### 1. 环境准备
 
-```
-要求：Python 3.10+（LinuxCNC 2.10 自带 PyQt5，零依赖即可运行）
-```
+| 角色 | 操作系统 | Python | 依赖 |
+|------|----------|--------|------|
+| **Builder（开发机）** | Windows / Linux | 3.10+ | PyQt5（LinuxCNC 2.10 自带，无需额外安装） |
+| **导出的项目（机床）** | LinuxCNC (Debian/Ubuntu) | 3.10+ | PySide6 ≥ 6.5（需在 venv 中安装） |
+
+> Builder 本身用 PyQt5 开发（LinuxCNC 2.10 原生自带），导出的项目运行框架基于 PySide6。
 
 - **Windows 开发机**：用于设计界面，直接 `python main.py` 启动 Builder
-- **LinuxCNC 机床**：用于运行生成的界面项目
+- **LinuxCNC 机床**：用于运行生成的界面项目，需先安装 venv + PySide6（见下方步骤 6）
 
 #### 2. 启动 Builder
 
@@ -97,27 +100,66 @@ python main.py
 3. 点击「**导出项目**」
 4. 将导出的目录复制到 LinuxCNC 机器上
 
-#### 6. 在 LinuxCNC 上运行
+#### 6. 在 LinuxCNC 上部署运行
+
+##### 6.1 安装依赖
+
+导出的项目依赖 **PySide6 ≥ 6.5**，需要在 LinuxCNC 机床上的**虚拟环境**中安装。
 
 ```bash
+# 1. 进入导出项目目录
 cd my-cnc
-python main.py
+
+# 2. 创建虚拟环境
+python3 -m venv venv
+
+# 3. 激活虚拟环境
+source venv/bin/activate
+
+# 4. 安装 PySide6（在线）
+pip install PySide6>=6.5
+
+# 5. 验证安装
+python -c "from PySide6.QtCore import *; print('OK')"
 ```
 
-#### 离线安装 PySide6
+##### 6.2 离线安装（无网络时）
 
-适用于无网络的 LinuxCNC 机床：
+适用于无互联网连接的 LinuxCNC 机床：
 
 ```bash
-# 1. 在同架构的有网机器上下载离线包
-pip download --only-binary=:all: PySide6 -d offline_wheels/x86_64/
+# 1. 在同架构的有网机器上下载 PySide6 离线包
+pip download --only-binary=:all: PySide6>=6.5 -d offline_wheels/x86_64/
 
-# 2. 将 offline_wheels/ 复制到 qmlvcp-builder/ 目录下
+# 2. 将 offline_wheels/ 复制到 LinuxCNC 机床的项目目录中
 
-# 3. 在 Builder 中创建 venv 后点「安装 PySide6」，自动走离线安装
+# 3. 在机床上的 venv 中离线安装
+source venv/bin/activate
+pip install offline_wheels/x86_64/*.whl
 ```
 
 支持的架构：`x86_64`、`aarch64`
+
+##### 6.3 配置 LinuxCNC 启动
+
+编辑你的 LinuxCNC 机床配置文件（`.ini`），在 `[DISPLAY]` 段中指定项目的 `start.sh`：
+
+```ini
+[DISPLAY]
+DISPLAY = /path/to/my-cnc/start.sh
+```
+
+`start.sh` 会自动激活 venv 并启动界面，LinuxCNC 启动时会将 ini 路径作为 `-ini` 参数传入，框架自动完成 HAL 连接和 NML 通信初始化。
+
+##### 6.4 独立预览（不连接 LinuxCNC）
+
+```bash
+cd my-cnc
+source venv/bin/activate
+python main.py
+```
+
+此模式仅用于预览界面外观，不连接 HAL/NML。
 
 ### 目录结构
 
@@ -275,12 +317,15 @@ QmlVcp Builder is a **visual** CNC operator interface assembly tool for LinuxCNC
 
 #### 1. Prerequisites
 
-```
-Requirements: Python 3.10+ (LinuxCNC 2.10 ships PyQt5, zero extra dependencies)
-```
+| Role | OS | Python | Dependencies |
+|------|----|--------|--------------|
+| **Builder (dev machine)** | Windows / Linux | 3.10+ | PyQt5 (bundled with LinuxCNC 2.10, no extra install) |
+| **Exported project (CNC machine)** | LinuxCNC (Debian/Ubuntu) | 3.10+ | PySide6 ≥ 6.5 (install in venv, see step 6) |
+
+> The Builder uses PyQt5 (native to LinuxCNC 2.10). Exported projects run on PySide6.
 
 - **Windows dev machine**: Design interfaces — run `python main.py` to launch Builder
-- **LinuxCNC machine**: Run the exported project
+- **LinuxCNC machine**: Run the exported project — requires venv + PySide6 (see step 6 below)
 
 #### 2. Launch Builder
 
@@ -317,27 +362,66 @@ python main.py
 3. Click **Export Project**
 4. Copy the exported directory to your LinuxCNC machine
 
-#### 6. Run on LinuxCNC
+#### 6. Deploy on LinuxCNC
+
+##### 6.1 Install Dependencies
+
+The exported project requires **PySide6 ≥ 6.5**, which must be installed in a **virtual environment** on the LinuxCNC machine.
 
 ```bash
+# 1. Enter the exported project directory
 cd my-cnc
-python main.py
+
+# 2. Create a virtual environment
+python3 -m venv venv
+
+# 3. Activate the venv
+source venv/bin/activate
+
+# 4. Install PySide6 (online)
+pip install PySide6>=6.5
+
+# 5. Verify installation
+python -c "from PySide6.QtCore import *; print('OK')"
 ```
 
-#### Offline PySide6 Installation
+##### 6.2 Offline Installation (no internet)
 
 For air-gapped LinuxCNC machines:
 
 ```bash
 # 1. On a network-connected machine with the same architecture:
-pip download --only-binary=:all: PySide6 -d offline_wheels/x86_64/
+pip download --only-binary=:all: PySide6>=6.5 -d offline_wheels/x86_64/
 
-# 2. Copy offline_wheels/ to the qmlvcp-builder/ directory
+# 2. Copy offline_wheels/ to the LinuxCNC machine's project directory
 
-# 3. In Builder, create venv then click "Install PySide6" — auto offline install
+# 3. Install inside the venv on the LinuxCNC machine
+source venv/bin/activate
+pip install offline_wheels/x86_64/*.whl
 ```
 
 Supported architectures: `x86_64`, `aarch64`
+
+##### 6.3 Configure LinuxCNC Startup
+
+Edit your LinuxCNC machine config file (`.ini`), point `[DISPLAY]` to the project's `start.sh`:
+
+```ini
+[DISPLAY]
+DISPLAY = /path/to/my-cnc/start.sh
+```
+
+`start.sh` auto-activates the venv and launches the UI. LinuxCNC passes the ini path as `-ini` on startup; the framework handles HAL connection and NML communication automatically.
+
+##### 6.4 Standalone Preview (no LinuxCNC)
+
+```bash
+cd my-cnc
+source venv/bin/activate
+python main.py
+```
+
+This mode only previews the UI appearance, without HAL/NML connection.
 
 ### Directory Structure
 

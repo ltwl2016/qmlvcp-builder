@@ -186,9 +186,10 @@ qmlvcp-builder/
 │   │   ├── jog_controller.py# JOG 控制
 │   │   ├── hal_manager.py   # HAL 引脚管理
 │   │   ├── gcode_graphics.py# 刀路渲染引擎
-│   │   └── gcode_parser.py  # G 代码解析器
-│   └── qml/QmlVcp/         # QML 控件库
-└── offline_wheels/          # 离线安装包存放目录
+│   │   ├── gcode_parser.py       # G 代码解析器
+│   │   └── fast_gcode_parser.so  # C++ 加速（x86_64 预编译，aarch64 需自行 g++ 编译）
+│   └── qml/QmlVcp/              # QML 控件库
+└── offline_wheels/               # 离线安装包存放目录
     ├── x86_64/
     └── aarch64/
 ```
@@ -447,9 +448,10 @@ qmlvcp-builder/
 │   │   ├── jog_controller.py# JOG controller
 │   │   ├── hal_manager.py   # HAL pin manager
 │   │   ├── gcode_graphics.py# Toolpath rendering engine
-│   │   └── gcode_parser.py  # G-code parser
-│   └── qml/QmlVcp/         # QML control library
-└── offline_wheels/          # Offline wheel storage
+│   │   ├── gcode_parser.py        # G-code parser
+│   │   └── fast_gcode_parser.so   # C++ accelerator (prebuilt for x86_64, recompile for aarch64)
+│   └── qml/QmlVcp/               # QML control library
+└── offline_wheels/                # Offline wheel storage
     ├── x86_64/
     └── aarch64/
 ```

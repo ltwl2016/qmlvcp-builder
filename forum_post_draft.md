@@ -15,7 +15,7 @@
 5. **Multi-page layout** — main page, side panels, top/bottom bars
 6. **One-click export** — generates a self-contained project: copy it to your LinuxCNC machine, configure `[DISPLAY]` in your ini, and it runs
 
-Built with Python + PyQt5 (native to LinuxCNC 2.10). Exported projects use PySide6.
+Built with Python + PyQt5 (native to LinuxCNC 2.9.8+). Exported projects use PySide6.
 
 **17 control types currently supported:** ImageButton, SpriteButton, LED, FlashLED, Text_DRO, Text_Label, TextField, MachTextInput, GCodeGraphics (3D toolpath view), GCodeViewer, EmergencyStop, JOGButton, Image, Rectangle, Timer, FileDialog, RunFromHereDialog.
 

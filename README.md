@@ -57,10 +57,10 @@ QmlVcp Builder 是一款**可视化**的 CNC 操作界面拼装工具，面向 L
 
 | 角色 | 操作系统 | Python | 依赖 |
 |------|----------|--------|------|
-| **Builder（开发机）** | Windows / Linux | 3.10+ | PyQt5（LinuxCNC 2.10 自带，无需额外安装） |
+| **Builder（开发机）** | Windows / Linux | 3.10+ | PyQt5（LinuxCNC 2.9.8+ 自带，无需额外安装） |
 | **导出的项目（机床）** | LinuxCNC (Debian/Ubuntu) | 3.10+ | PySide6 ≥ 6.5（需在 venv 中安装） |
 
-> Builder 本身用 PyQt5 开发（LinuxCNC 2.10 原生自带），导出的项目运行框架基于 PySide6。
+> Builder 本身用 PyQt5 开发（LinuxCNC 2.9.8+ 原生自带），导出的项目运行框架基于 PySide6。
 
 - **Windows 开发机**：用于设计界面，直接 `python main.py` 启动 Builder
 - **LinuxCNC 机床**：用于运行生成的界面项目，需先安装 venv + PySide6（见下方步骤 6）
@@ -197,7 +197,7 @@ qmlvcp-builder/
 
 #### 项目架构
 
-Builder 基于 **PyQt5**（LinuxCNC 2.10 原生自带），生成的运行时项目基于 **PySide6**。
+Builder 基于 **PyQt5**（LinuxCNC 2.9.8+ 原生自带），生成的运行时项目基于 **PySide6**。
 
 三标签页架构：
 ```
@@ -319,10 +319,10 @@ QmlVcp Builder is a **visual** CNC operator interface assembly tool for LinuxCNC
 
 | Role | OS | Python | Dependencies |
 |------|----|--------|--------------|
-| **Builder (dev machine)** | Windows / Linux | 3.10+ | PyQt5 (bundled with LinuxCNC 2.10, no extra install) |
+| **Builder (dev machine)** | Windows / Linux | 3.10+ | PyQt5 (bundled with LinuxCNC 2.9.8+, no extra install) |
 | **Exported project (CNC machine)** | LinuxCNC (Debian/Ubuntu) | 3.10+ | PySide6 ≥ 6.5 (install in venv, see step 6) |
 
-> The Builder uses PyQt5 (native to LinuxCNC 2.10). Exported projects run on PySide6.
+> The Builder uses PyQt5 (native to LinuxCNC 2.9.8+). Exported projects run on PySide6.
 
 - **Windows dev machine**: Design interfaces — run `python main.py` to launch Builder
 - **LinuxCNC machine**: Run the exported project — requires venv + PySide6 (see step 6 below)
@@ -458,7 +458,7 @@ qmlvcp-builder/
 
 #### Architecture
 
-The Builder is built on **PyQt5** (native to LinuxCNC 2.10). Generated runtime projects use **PySide6**.
+The Builder is built on **PyQt5** (native to LinuxCNC 2.9.8+). Generated runtime projects use **PySide6**.
 
 Three-tab architecture:
 ```

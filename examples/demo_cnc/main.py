@@ -27,8 +27,9 @@ from __future__ import annotations
 import os, sys
 
 base_dir = os.path.dirname(os.path.abspath(__file__))
-parent_dir = os.path.dirname(base_dir)
-sys.path.insert(0, parent_dir)
+# 上溯两级到项目根目录（demo_cnc → examples → 项目根），才能找到 qmlvcp 包
+root_dir = os.path.dirname(os.path.dirname(base_dir))
+sys.path.insert(0, root_dir)
 
 from PySide6.QtCore import QUrl, QTimer
 from PySide6.QtGui import QGuiApplication, QSurfaceFormat

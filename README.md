@@ -529,6 +529,66 @@ _pages = [{
 
 ---
 
+## 参与贡献 / Contributing
+
+> **本项目已具备基本功能，但距离成熟完善还有大量工作要做。欢迎任何人参与进来！**
+> **This project has core functionality working, but is far from mature. Contributors of all skill levels are welcome!**
+
+### 当前状态 / Current State（诚实的 / honestly）
+
+| 方面 / Area | 状态 / Status |
+|-------------|---------------|
+| Builder drag-drop assembly | ✅ Working |
+| Control types (17) | ✅ Buttons, LEDs, DROs, toolpath, JOG... |
+| Action/binding system | ✅ Common CNC operations covered |
+| Project export | ✅ One-click runnable output |
+| Multi-page layout | ✅ Main/side/top/bottom panels |
+| Documentation | ⚠️ Basic coverage, missing video tutorials |
+| Control variety | ⚠️ Room for more industrial widgets |
+| HAL pin customization | ⚠️ Only predefined bindings |
+| i18n / multi-language | ❌ Not implemented |
+| Unit tests | ❌ Not covered |
+| Real-machine testing | ❌ Needs multi-machine validation |
+| Keyboard shortcuts | ❌ Not implemented |
+
+### 欢迎参与的方向 / Ways to Contribute
+
+无论你是 Python/QML 开发者、LinuxCNC 用户、设计师还是文档写手，都有可以入手的地方。
+
+#### 开发 / Development
+
+- **新控件 / New controls** — 添加滑块、旋钮、仪表盘、波形图等控件（需同时写 QML 模板 + 属性定义）。/ Add sliders, knobs, gauges, waveform displays etc. (QML template + property definition needed).
+- **HAL 引脚灵活绑定 / Flexible HAL binding** — 让用户自定义 HAL 引脚映射，而非只选预定义绑定。/ Let users map arbitrary HAL pins instead of only predefined bindings.
+- **键盘快捷键 / Keyboard shortcuts** — Builder 编辑态和运行态快捷键。/ Shortcuts for Builder editing and runtime.
+- **单元测试 / Unit tests** — 为核心模块补充 pytest。/ Add pytest coverage for core modules.
+- **多语言 / i18n** — Builder 和导出界面都支持多语言。/ Multi-language support for both Builder and exported UIs.
+
+#### 体验 / UX
+
+- **更美观的默认样式 / Better default styling** — QSS/CSS 调优。 / Polish the look and feel.
+- **触屏手势 / Touch gestures** — 滑动、缩放等。 / Swipe, pinch-zoom, etc.
+- **控件对齐辅助 / Snap & alignment** — 画布吸附对齐、等间距分布。 / Canvas snapping, evenly-spaced distribution.
+
+#### 内容 / Content
+
+- **示例项目 / Example projects** — 用 Builder 搭真实 CNC 面板并贡献到 `examples/`。 / Build real panels and contribute them.
+- **教程视频 / Video tutorials** — 从零到上机的完整演示。 / Full walkthrough from scratch.
+- **文档翻译 / Doc translation** — 中↔英双向完善。/ Bilingual polish.
+- **实机测试 / Real-machine testing** — 不同版本 LinuxCNC、不同分辨率上测试反馈。/ Test on different LinuxCNC versions and screen resolutions.
+
+#### 如何参与 / How to Get Involved
+
+1. **Fork** this repo
+2. Create a feature branch: `git checkout -b feature/my-feature`
+3. Commit: `git commit -m "describe your change"`
+4. Open a **Pull Request**
+
+也可以在 **Issues** 中提新想法、报告 Bug、讨论设计。没有任何贡献是"太小"的——改一个错别字也是一种帮助。
+
+Also feel free to open **Issues** for ideas, bug reports, or design discussions. No contribution is "too small" — even fixing a typo helps.
+
+---
+
 ## License
 
 This project is part of the QmlVcp ecosystem for LinuxCNC.

@@ -1,0 +1,6 @@
+#!/bin/bash
+cd "$(dirname "$0")"
+source "$(dirname "$0")/../cnc_env/bin/activate"
+export QT_QPA_PLATFORM=xcb
+export QML_DISABLE_DISK_CACHE=1
+python3 -u main.py "$@" > /tmp/pyside.log 2>&1

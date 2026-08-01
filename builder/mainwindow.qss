@@ -1,0 +1,74 @@
+/* ═══════════════════════════════════════════════════════
+   QmlVcp Builder — 全局样式表
+   ═══════════════════════════════════════════════════════ */
+
+QMainWindow, QDialog, QWidget {
+    background-color: #f0f0f0;
+    color: #222;
+}
+
+/* ── QGroupBox ── */
+QGroupBox {
+    border: 1px solid #bbb;
+    border-radius: 6px;
+    margin-top: 10px;
+    padding-top: 15px;
+    font-weight: bold;
+    background: #f8f8f8;
+}
+QGroupBox::title {
+    subcontrol-origin: margin;
+    left: 10px;
+    padding: 0 5px;
+}
+
+/* ── QPushButton ── */
+QPushButton {
+    background: #e8e8e8;
+    border: 1px solid #aaa;
+    border-radius: 4px;
+    padding: 5px 15px;
+    color: #222;
+}
+QPushButton:hover    { background: #ddd; }
+QPushButton:pressed  { background: #ccc; }
+QPushButton:checked  { background: #b8d8f8; }
+
+/* ── 输入控件 ── */
+QLineEdit, QSpinBox, QComboBox, QTextEdit {
+    background: #fff;
+    border: 1px solid #bbb;
+    border-radius: 3px;
+    padding: 3px;
+    color: #222;
+}
+
+/* ── QTableWidget ── */
+QTableWidget {
+    background: #fff;
+    gridline-color: #ddd;
+}
+
+/* ── QTabWidget ── */
+QTabWidget::pane { border: 1px solid #bbb; }
+QTabBar::tab {
+    background: #e0e0e0;
+    padding: 8px 20px;
+    border: 1px solid #bbb;
+    border-bottom: none;
+    color: #333;
+}
+QTabBar::tab:selected { background: #f8f8f8; }
+
+/* ── QListWidget ── */
+QListWidget {
+    background: #fff;
+    border: 1px solid #bbb;
+}
+
+/* ── QProgressBar ── */
+QProgressBar {
+    border: 1px solid #bbb;
+    text-align: center;
+    background: #fff;
+}

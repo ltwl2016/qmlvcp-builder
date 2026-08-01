@@ -1,0 +1,450 @@
+# QmlVcp Builder — CNC 界面可视化拼装工具
+
+> WYSIWYG CNC GUI Builder for LinuxCNC / 所见即所得的 LinuxCNC 界面拼装工具
+
+[中文](#中文) | [English](#english)
+
+---
+
+## 中文
+
+### 简介
+
+QmlVcp Builder 是一款**可视化**的 CNC 操作界面拼装工具，面向 LinuxCNC 数控系统。无需手写 QML 代码，通过拖拽控件、编辑属性即可快速搭建工业级触摸屏操作面板。
+
+**核心特点：**
+
+- **零代码拼装** — 拖拽放置按钮、指示灯、DRO、刀路显示等控件
+- **实时预览** — 所见即所得，编辑区即时显示控件位置和样式
+- **动作/绑定系统** — 内置丰富的机床指令（回零、主轴、冷却液等）和状态绑定
+- **多页面架构** — 支持主页 / 侧面板 / 顶栏 / 底栏分区布局
+- **一键导出** — 生成完整可运行的 QML 项目，拷到 LinuxCNC 上即可使用
+- **离线安装** — 支持在无网络的 LinuxCNC 机器上离线安装 PySide6
+
+### 界面概览
+
+| 标签页 | 功能 |
+|--------|------|
+| **环境设置** | 创建 Python 虚拟环境、安装 PySide6（在线/离线） |
+| **界面拼装** | 控件列表 → 拖放至画布 → 属性编辑 → 实时预览 |
+| **项目导出** | 设置导出路径、一键生成可运行项目 |
+
+### 支持的控件
+
+| 控件 | 说明 |
+|------|------|
+| `ImageButton` | 贴图按钮（支持按下/松开双帧、可选透明） |
+| `SpriteButton` | 精灵图多帧按钮 |
+| `LED` | 状态指示灯（颜色随状态变化） |
+| `FlashLED` | 闪烁指示灯 |
+| `Text_DRO` | 数字读数器（坐标/速度/转速显示） |
+| `Text_Label` | 静态文本标签 |
+| `TextField` | 文本输入框 |
+| `MachTextInput` | 工业风文本输入 |
+| `GCodeGraphics` | 3D 刀路可视化 |
+| `GCodeViewer` | G 代码列表浏览器 |
+| `EmergencyStop` | 急停按钮 |
+| `JOGButton` | 点动按钮（带方向和速度控制） |
+| `Image` | 静态贴图（背景/Logo） |
+| `Rectangle` | 矩形色块 |
+| `Timer` | 定时器控件 |
+| `FileDialog` | 文件浏览对话框 |
+| `RunFromHereDialog` | 断点续跑弹窗 |
+
+### 使用方式
+
+#### 1. 环境准备
+
+```
+要求：Python 3.10+（LinuxCNC 2.10 自带 PyQt5，零依赖即可运行）
+```
+
+- **Windows 开发机**：用于设计界面，直接 `python main.py` 启动 Builder
+- **LinuxCNC 机床**：用于运行生成的界面项目
+
+#### 2. 启动 Builder
+
+```bash
+cd qmlvcp-builder
+python main.py
+```
+
+#### 3. 环境设置（首次使用）
+
+1. 切换到「**环境设置**」标签页
+2. 点击「**创建虚拟环境**」，等待完成
+3. 点击「**安装 PySide6**」
+   - 有网络：自动在线安装
+   - 无网络：提前下载 whl 文件放入 `offline_wheels/{arch}/` 目录
+
+#### 4. 拼装界面
+
+1. 切换到「**界面拼装**」标签页
+2. 左侧控件列表中选择控件类型
+3. 点击「**+ 添加**」按钮，控件出现在画布上
+4. 在画布上**拖拽**调整位置，**拖拽边角**调整大小
+5. 右侧属性面板编辑控件属性：
+   - **基础属性**（x, y, 宽, 高, 层级）
+   - **外观属性**（颜色、贴图路径、文字、字体大小）
+   - **动作绑定**（按钮点击执行什么 CNC 操作）
+   - **状态绑定**（指示灯/文字关联哪个机床状态）
+6. 多页面切换：通过右下角页面切换器管理多个主页面
+
+#### 5. 导出项目
+
+1. 切换到「**项目导出**」标签页
+2. 设置导出目录（默认 `~/my-cnc`）
+3. 点击「**导出项目**」
+4. 将导出的目录复制到 LinuxCNC 机器上
+
+#### 6. 在 LinuxCNC 上运行
+
+```bash
+cd my-cnc
+python main.py
+```
+
+#### 离线安装 PySide6
+
+适用于无网络的 LinuxCNC 机床：
+
+```bash
+# 1. 在同架构的有网机器上下载离线包
+pip download --only-binary=:all: PySide6 -d offline_wheels/x86_64/
+
+# 2. 将 offline_wheels/ 复制到 qmlvcp-builder/ 目录下
+
+# 3. 在 Builder 中创建 venv 后点「安装 PySide6」，自动走离线安装
+```
+
+支持的架构：`x86_64`、`aarch64`
+
+### 目录结构
+
+```
+qmlvcp-builder/
+├── main.py                  # Builder 入口
+├── builder/                 # Builder 核心代码
+│   ├── main_window.py       # 主窗口（三标签页）
+│   ├── preview_canvas.py    # 预览画布（拖拽/缩放控件）
+│   ├── properties_mixin.py  # 属性面板逻辑
+│   ├── field_registry.py    # 属性字段工厂
+│   ├── project_exporter.py  # 项目导出器
+│   ├── project_importer.py  # 项目导入器
+│   ├── env_setup.py         # 虚拟环境 + PySide6 安装
+│   ├── controls.py          # 控件/动作/绑定定义
+│   ├── templates/           # QML 控件模板
+│   │   └── *.qml            # 17 个控件模板
+│   ├── mainwindow.ui        # Qt Designer 布局文件
+│   └── mainwindow.qss       # 全局样式表
+├── qmlvcp/                  # 运行时库（随项目导出）
+│   ├── core/                # 核心模块
+│   │   ├── status.py        # 机床状态读取
+│   │   ├── command.py       # 指令下发
+│   │   ├── jog_controller.py# JOG 控制
+│   │   ├── hal_manager.py   # HAL 引脚管理
+│   │   ├── gcode_graphics.py# 刀路渲染引擎
+│   │   └── gcode_parser.py  # G 代码解析器
+│   └── qml/QmlVcp/         # QML 控件库
+└── offline_wheels/          # 离线安装包存放目录
+    ├── x86_64/
+    └── aarch64/
+```
+
+### 开发文档
+
+#### 项目架构
+
+Builder 基于 **PyQt5**（LinuxCNC 2.10 原生自带），生成的运行时项目基于 **PySide6**。
+
+三标签页架构：
+```
+MainWindow (QMainWindow)
+├── Tab 1: 环境设置 (EnvManager)
+│   ├── 创建/检测 venv
+│   ├── 安装 PySide6（在线 + 离线回退）
+│   └── 状态日志
+├── Tab 2: 界面拼装 (PropertiesMixin)
+│   ├── 控件列表 (左侧)
+│   ├── 预览画布 (中间, PreviewCanvas)
+│   └── 属性面板 (右侧, 动态表单)
+└── Tab 3: 项目导出
+    ├── 导出路径设置
+    ├── 窗口尺寸配置
+    └── QML 模板渲染导出
+```
+
+#### 数据模型
+
+```python
+_pages = [{
+    "name": "mainwindow",
+    "controls": [{
+        "type": "ImageButton",
+        "x": 100, "y": 200,
+        "w": 120, "h": 80,
+        "image": "assets/btn_start.png",
+        "action": "cmd.progRun",
+        "bind": "",
+        "z": 0,
+        "visible": True
+    }, ...],
+    "bg": "",
+    "x": 0, "y": 0,
+    "width": 1375, "height": 1000
+}]
+```
+
+#### 添加新控件
+
+1. 在 `builder/templates/` 下创建 `NewControl.qml` 模板
+2. 在 `builder/templates/controls.py` 中注册控件属性定义
+3. 控件模板使用 `{FIELD}` 占位符，导出时自动替换
+
+#### 预定义动作与绑定
+
+动作 (Actions) — 按钮点击时执行：
+- `command.homeAll()` — 全部回零
+- `command.setSpindle(1, 0)` — 主轴正转
+- `command.programRun(0)` — 启动程序
+- 更多见 `builder/controls.py` 中的 `ACTIONS` 字典
+
+状态绑定 (Status Binds) — 控件属性跟随机床状态：
+- `status.homedX` — X 轴是否已回零
+- `status.spindleSpeed` — 当前主轴转速
+- `status.absoluteX` — X 轴绝对坐标
+- 更多见 `builder/controls.py` 中的 `STATUS_BINDS` 字典
+
+#### 导出原理
+
+1. 收集所有页面/面板的控件数据
+2. 遍历控件，从 `builder/templates/` 读取对应 QML 模板
+3. 将属性值填入模板占位符 (如 `{x}`, `{y}`, `{width}`, `{image}`, `{action}`, `{bind}` 等)
+4. 合并生成 `Main.qml`
+5. 将 `qmlvcp/` 运行时库、`main.py`、`backend.py` 复制到导出目录
+6. 最终产物是一个完整独立、可直接 `python main.py` 运行的项目
+
+---
+
+## English
+
+### Introduction
+
+QmlVcp Builder is a **visual** CNC operator interface assembly tool for LinuxCNC. Build industrial-grade touchscreen control panels by drag-and-drop without writing QML code.
+
+**Key Features:**
+
+- **Zero-code Assembly** — Drag and drop controls (buttons, indicators, DROs, toolpath displays, etc.)
+- **Real-time Preview** — WYSIWYG editing with instant position/style feedback
+- **Action/Binding System** — Rich built-in CNC commands (homing, spindle, coolant, etc.) and status bindings
+- **Multi-page Architecture** — Supports main page / side panel / topbar / bottombar layouts
+- **One-click Export** — Generates a complete runnable QML project, ready for LinuxCNC
+- **Offline Installation** — Install PySide6 on air-gapped LinuxCNC machines via offline wheels
+
+### UI Overview
+
+| Tab | Function |
+|-----|----------|
+| **Environment Setup** | Create venv, install PySide6 (online/offline) |
+| **UI Assembly** | Control palette → drop on canvas → edit properties → preview |
+| **Project Export** | Set export path, one-click generate runnable project |
+
+### Supported Controls
+
+| Control | Description |
+|---------|-------------|
+| `ImageButton` | Image button (dual-frame press/release, optional transparency) |
+| `SpriteButton` | Multi-frame sprite button |
+| `LED` | Status indicator (color changes with state) |
+| `FlashLED` | Flashing indicator |
+| `Text_DRO` | Digital readout (position/speed/RPM display) |
+| `Text_Label` | Static text label |
+| `TextField` | Text input field |
+| `MachTextInput` | Industrial-style text input |
+| `GCodeGraphics` | 3D toolpath visualization |
+| `GCodeViewer` | G-code file browser |
+| `EmergencyStop` | Emergency stop button |
+| `JOGButton` | Jog button (with direction and speed control) |
+| `Image` | Static image (background/logo) |
+| `Rectangle` | Colored rectangle |
+| `Timer` | Timer control |
+| `FileDialog` | File browser dialog |
+| `RunFromHereDialog` | Run-from-here dialog |
+
+### Usage
+
+#### 1. Prerequisites
+
+```
+Requirements: Python 3.10+ (LinuxCNC 2.10 ships PyQt5, zero extra dependencies)
+```
+
+- **Windows dev machine**: Design interfaces — run `python main.py` to launch Builder
+- **LinuxCNC machine**: Run the exported project
+
+#### 2. Launch Builder
+
+```bash
+cd qmlvcp-builder
+python main.py
+```
+
+#### 3. Environment Setup (first use)
+
+1. Switch to **Environment Setup** tab
+2. Click **Create venv**, wait for completion
+3. Click **Install PySide6**
+   - With network: automatic online install
+   - Without network: pre-download whl files into `offline_wheels/{arch}/`
+
+#### 4. Assemble UI
+
+1. Switch to **UI Assembly** tab
+2. Select a control type from the left palette
+3. Click **+ Add** to place it on the canvas
+4. **Drag** to reposition, **drag corners** to resize
+5. Edit properties in the right panel:
+   - **Basic** (x, y, width, height, z-order)
+   - **Appearance** (color, image path, text, font size)
+   - **Action binding** (what CNC operation does this button trigger)
+   - **Status binding** (which machine state drives this indicator/label)
+6. Multi-page switching: use the page switcher at bottom-right
+
+#### 5. Export Project
+
+1. Switch to **Project Export** tab
+2. Set export directory (default `~/my-cnc`)
+3. Click **Export Project**
+4. Copy the exported directory to your LinuxCNC machine
+
+#### 6. Run on LinuxCNC
+
+```bash
+cd my-cnc
+python main.py
+```
+
+#### Offline PySide6 Installation
+
+For air-gapped LinuxCNC machines:
+
+```bash
+# 1. On a network-connected machine with the same architecture:
+pip download --only-binary=:all: PySide6 -d offline_wheels/x86_64/
+
+# 2. Copy offline_wheels/ to the qmlvcp-builder/ directory
+
+# 3. In Builder, create venv then click "Install PySide6" — auto offline install
+```
+
+Supported architectures: `x86_64`, `aarch64`
+
+### Directory Structure
+
+```
+qmlvcp-builder/
+├── main.py                  # Builder entry point
+├── builder/                 # Builder core
+│   ├── main_window.py       # Main window (three tabs)
+│   ├── preview_canvas.py    # Preview canvas (drag/resize controls)
+│   ├── properties_mixin.py  # Property panel logic
+│   ├── field_registry.py    # Property field factory
+│   ├── project_exporter.py  # Project exporter
+│   ├── project_importer.py  # Project importer
+│   ├── env_setup.py         # venv + PySide6 installer
+│   ├── controls.py          # Control/action/binding definitions
+│   ├── templates/           # QML control templates (17 .qml files)
+│   ├── mainwindow.ui        # Qt Designer layout
+│   └── mainwindow.qss       # Global stylesheet
+├── qmlvcp/                  # Runtime library (bundled on export)
+│   ├── core/                # Core modules
+│   │   ├── status.py        # Machine status reader
+│   │   ├── command.py       # Command dispatcher
+│   │   ├── jog_controller.py# JOG controller
+│   │   ├── hal_manager.py   # HAL pin manager
+│   │   ├── gcode_graphics.py# Toolpath rendering engine
+│   │   └── gcode_parser.py  # G-code parser
+│   └── qml/QmlVcp/         # QML control library
+└── offline_wheels/          # Offline wheel storage
+    ├── x86_64/
+    └── aarch64/
+```
+
+### Development Guide
+
+#### Architecture
+
+The Builder is built on **PyQt5** (native to LinuxCNC 2.10). Generated runtime projects use **PySide6**.
+
+Three-tab architecture:
+```
+MainWindow (QMainWindow)
+├── Tab 1: Environment (EnvManager)
+│   ├── Create/detect venv
+│   ├── Install PySide6 (online + offline fallback)
+│   └── Status log
+├── Tab 2: UI Assembly (PropertiesMixin)
+│   ├── Control palette (left)
+│   ├── Preview canvas (center, PreviewCanvas)
+│   └── Property panel (right, dynamic form)
+└── Tab 3: Project Export
+    ├── Export path config
+    ├── Window size config
+    └── QML template rendering & export
+```
+
+#### Data Model
+
+```python
+_pages = [{
+    "name": "mainwindow",
+    "controls": [{
+        "type": "ImageButton",
+        "x": 100, "y": 200,
+        "w": 120, "h": 80,
+        "image": "assets/btn_start.png",
+        "action": "cmd.progRun",
+        "bind": "",
+        "z": 0,
+        "visible": True
+    }, ...],
+    "bg": "",
+    "x": 0, "y": 0,
+    "width": 1375, "height": 1000
+}]
+```
+
+#### Adding a New Control
+
+1. Create `NewControl.qml` template in `builder/templates/`
+2. Register control property definitions in `builder/templates/controls.py`
+3. Use `{FIELD}` placeholders in templates — auto-replaced on export
+
+#### Predefined Actions & Status Binds
+
+**Actions** — triggered on button click:
+- `command.homeAll()` — Home all axes
+- `command.setSpindle(1, 0)` — Spindle CW
+- `command.programRun(0)` — Start program
+- See more in `builder/controls.py` → `ACTIONS` dict
+
+**Status Binds** — control properties follow machine state:
+- `status.homedX` — X-axis homed?
+- `status.spindleSpeed` — Current spindle RPM
+- `status.absoluteX` — X-axis absolute position
+- See more in `builder/controls.py` → `STATUS_BINDS` dict
+
+#### Export Workflow
+
+1. Collect all control data from pages/panels
+2. Iterate controls, read corresponding QML templates from `builder/templates/`
+3. Fill template placeholders with property values (e.g. `{x}`, `{y}`, `{image}`, `{action}`, `{bind}`)
+4. Merge into `Main.qml`
+5. Copy `qmlvcp/` runtime library, `main.py`, `backend.py` to export directory
+6. Final output is a fully self-contained runnable project
+
+---
+
+## License
+
+This project is part of the QmlVcp ecosystem for LinuxCNC.

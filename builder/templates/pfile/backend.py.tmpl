@@ -1,0 +1,727 @@
+"""
+qmlVCP 后端桥接层 (backend.py)
+
+负责对接 qmlVCP 核心引擎的状态与指令，将其转化为 Qt 信号供 QML 界面使用。
+本文件已彻底净化，不再包含底层 INI 解析逻辑，完全遵循 MVC 架构。
+"""
+from __future__ import annotations
+
+from datetime import datetime
+import subprocess
+from PySide6.QtCore import QObject, QTimer, Property, Signal, Slot
+
+from qmlvcp.core.status import Status
+from qmlvcp.core.command import Command
+from qmlvcp.core.jog_controller import JogController
+from qmlvcp.core.override_manager import OverrideManager
+from qmlvcp.core.runtime_tracker import RuntimeTracker
+from qmlvcp.core.file_manager import FileManager
+
+# 默认坐标系常量
+AXES = ["X", "Y", "Z", "A", "B", "C", "U", "V", "W"]
+LINEAR_UNIT = "mm"
+ROTARY_UNIT = "deg"
+AXIS_MAP = {"X": 0, "Y": 1, "Z": 2, "A": 3, "B": 4, "C": 5, "U": 6, "V": 7, "W": 8}
+
+def _unit_for(axis: str, global_linear_unit: str = "mm") -> str:
+    return global_linear_unit if axis in ("X", "Y", "Z", "U", "V", "W") else ROTARY_UNIT
+
+class Backend(QObject):
+    timeChanged = Signal()
+    systemsChanged = Signal()
+    currentIndexChanged = Signal()
+    currentSystemChanged = Signal()
+    feedChanged = Signal()
+    spindleChanged = Signal()
+    machineChanged = Signal()
+    programChanged = Signal()
+    lineChanged = Signal()
+    machineConfigChanged = Signal()
+    toolChanged = Signal()
+    coolantChanged = Signal()
+    fileBrowserChanged = Signal()
+    singleBlockChanged = Signal()
+    blockDeleteChanged = Signal()
+    requestRunFromLineDialog = Signal(int)
+
+    def __init__(self, config=None, parent: QObject | None = None) -> None:
+        super().__init__(parent)
+
+        self._config = config
+        self._machineName = config.machine_name if config else "脱机模拟机床"
+        self._maxVelocity = config.max_velocity if config else 0.0
+        self._linearUnits = config.linear_units if config else "mm"
+
+        # QML 预存显示值（_on_coord_changed 中刷新，解决 PySide6 Property 嵌套调用不触发绑定的问题）
+        self._displayX = 0.0
+        self._displayY = 0.0
+        self._displayZ = 0.0
+        self._displayA = 0.0
+        self._displayB = 0.0
+        self._displayC = 0.0
+        # GCodeGraphics 高频缓存
+        self._cacheAbsX = 0.0
+        self._cacheAbsY = 0.0
+        self._cacheAbsZ = 0.0
+        self._cacheAbsA = 0.0
+        self._cacheAbsB = 0.0
+
+        global AXES
+        if config and config.axes:
+            AXES = config.axes
+
+        # 实例化 qmlVCP 核心组件，将刷新率从默认 100ms 提高到 25ms (40FPS) 彻底消除颗粒感
+        self.cnc_status = Status(config=self._config, parent=self, poll_interval_ms=25)
+        self.cnc_command = Command(self)
+
+        # JOG 控制器（业务逻辑已下沉至 qmlvcp，须在 Status/Command 之后创建）
+        self.jog_controller = JogController(self.cnc_command, self.cnc_status, config)
+        self.jog_controller.jogChanged.connect(self.machineChanged.emit)
+
+        # 倍率管理器（进给/主轴）
+        self.override_mgr = OverrideManager(self.cnc_command, self.cnc_status)
+
+        # 文件管理器（浏览/加载/关闭/编辑 G 代码）
+        self.file_mgr = FileManager(self.cnc_command, self.cnc_status)
+        self.file_mgr.fileBrowserChanged.connect(self.fileBrowserChanged)
+        self.file_mgr.programChanged.connect(self.programChanged)
+
+        # 监听核心组件的信号
+        # 坐标系变更由 Status 层实时计算，只需通知 QML 刷新显示
+        self.cnc_status.positionChanged.connect(self._on_coord_changed)
+        self.cnc_status.homedChanged.connect(self._on_coord_changed)
+        self.cnc_status.homedChanged.connect(self.machineChanged)
+        self.cnc_status.modeChanged.connect(self.machineChanged)
+        self.cnc_status.stateChanged.connect(self.machineChanged)
+        
+        self.cnc_command.requestRunFromLineDialog.connect(self.requestRunFromLineDialog)
+        self.cnc_status.errorChanged.connect(self.machineChanged)
+        self.cnc_status.messageChanged.connect(self.machineChanged)
+        self.cnc_status.motionModeChanged.connect(self.machineChanged)
+        self.cnc_status.interpStateChanged.connect(self.machineChanged)
+        
+        self.cnc_status.feedChanged.connect(self.feedChanged)
+        self.cnc_status.spindleChanged.connect(self.spindleChanged)
+        self.cnc_status.toolChanged.connect(self.toolChanged)
+        self.cnc_status.coolantChanged.connect(self.coolantChanged)
+        self.cnc_status.motionLineChanged.connect(self.lineChanged)
+        self.cnc_status.blockDeleteChanged.connect(self.blockDeleteChanged)
+        
+        self._singleBlockEnabled = False
+        QTimer.singleShot(500, lambda: self.cnc_command.setBlockDelete(False))
+        self.cnc_status.homedChanged.connect(self._on_homed_changed)
+
+        # 四级坐标系标签（数值实时委托 Status 层计算，不再手工遍历）
+        self._systems_labels = ["机床坐标", "相对坐标", "绝对坐标", "剩余距离"]
+        self._systems_codes = ["MACHINE", "RELATIVE", "ABSOLUTE", "DISTANCE"]
+        self._currentIndex = 2  # 默认显示绝对坐标
+
+        self._spindlePercent = 100
+        self._modal = "G01 G17 G90 G54 G94 G21"
+        self._programName = "O1024.NC"
+        self._lineNumber = 0
+        self._userName = "admin"
+
+        # 计时器（业务逻辑已下沉至 qmlvcp）
+        self.runtime_tracker = RuntimeTracker(self.cnc_status)
+        self.runtime_tracker.timeChanged.connect(self.timeChanged.emit)
+
+    # ---- 计时属性（委托 RuntimeTracker） ----
+    @Property(str, notify=timeChanged)
+    def processingTimeStr(self) -> str: return self.runtime_tracker.processingTimeStr
+
+    @Property(str, notify=timeChanged)
+    def totalTimeStr(self) -> str:      return self.runtime_tracker.totalTimeStr
+
+    def _on_coord_changed(self) -> None:
+        mach = self.cnc_status.actualPosition
+        g5x  = self.cnc_status.g5xOffset
+        self._displayX = mach[0] if self._currentIndex == 0 else mach[0] - g5x[0]
+        self._displayY = mach[1] if self._currentIndex == 0 else mach[1] - g5x[1]
+        self._displayZ = mach[2] if self._currentIndex == 0 else mach[2] - g5x[2]
+        self._displayA = mach[3] if self._currentIndex == 0 else mach[3] - g5x[3]
+        self._displayB = mach[4] if self._currentIndex == 0 else (mach[4] - g5x[4] if len(g5x) > 4 else mach[4])
+        self._displayC = mach[5] if self._currentIndex == 0 else (mach[5] - g5x[5] if len(g5x) > 5 else mach[5])
+        self._cacheAbsX = mach[0] - g5x[0]
+        self._cacheAbsY = mach[1] - g5x[1]
+        self._cacheAbsZ = mach[2] - g5x[2]
+        self._cacheAbsA = mach[3] - g5x[3] if len(g5x) > 3 else mach[3]
+        self._cacheAbsB = mach[4] - g5x[4] if len(g5x) > 4 else mach[4]
+        self.systemsChanged.emit()
+
+    # _check_program_file 已下沉至 FileManager._on_program_file_changed
+
+    def _systems_payload(self):
+        """构建 QML 坐标系选择器数据，直接用 Status 列表属性计算。"""
+        s = self.cnc_status
+        axes_order = ["X", "Y", "Z", "A", "B", "C", "U", "V", "W"]
+        mach = s.actualPosition if hasattr(s, 'actualPosition') else [0.0] * 9
+        g5x  = s.g5xOffset if hasattr(s, 'g5xOffset') else [0.0] * 9
+        g92  = s.g92Offset if hasattr(s, 'g92Offset') else [0.0] * 9
+        dtg  = s.distanceToGo if hasattr(s, 'distanceToGo') else [0.0] * 9
+
+        payload = []
+        for si, (name, code) in enumerate(zip(self._systems_labels, self._systems_codes)):
+            axes = []
+            for ai, a_name in enumerate(axes_order):
+                exists = a_name in AXIS_MAP
+                if si == 0:
+                    val = mach[ai] if ai < len(mach) else 0.0
+                elif si == 1:
+                    val = mach[ai] - g5x[ai] - g92[ai] if ai < len(mach) else 0.0
+                elif si == 2:
+                    val = mach[ai] - g5x[ai] if ai < len(mach) else 0.0
+                else:
+                    val = dtg[ai] if ai < len(dtg) else 0.0
+                try:
+                    is_homed = bool(s.homed[AXIS_MAP[a_name]]) if exists else False
+                except Exception:
+                    is_homed = False
+                axes.append({
+                    "axis": a_name, "value": round(val, 4),
+                    "unit": _unit_for(a_name, self._linearUnits),
+                    "homed": is_homed, "exists": exists,
+                })
+            payload.append({"name": name, "code": code, "axes": axes})
+        return payload
+
+    @Property("QVariant", notify=systemsChanged)
+    def systems(self):
+        return self._systems_payload()
+
+    @Property(int, notify=currentIndexChanged)
+    def currentIndex(self):
+        return self._currentIndex
+
+    @currentIndex.setter
+    def currentIndex(self, value: int):
+        if 0 <= value < len(self._systems_labels) and value != self._currentIndex:
+            self._currentIndex = value
+            self.currentIndexChanged.emit()
+            self.currentSystemChanged.emit()
+            self.systemsChanged.emit()
+
+    @Slot(int)
+    def selectSystem(self, index: int) -> None:
+        self.currentIndex = index
+
+    @Property(bool, notify=currentIndexChanged)
+    def isMachineCoordActive(self) -> bool:
+        return self._currentIndex == 0
+
+    @Slot()
+    def toggleMachineCoordinates(self) -> None:
+        self.currentIndex = 2 if self._currentIndex == 0 else 0
+
+    @Slot()
+    def showHalShow(self) -> None:
+        import subprocess
+        try:
+            subprocess.Popen(['halshow'])
+            print("[Backend] 已启动 halshow")
+        except Exception as e:
+            print(f"[Backend] 启动 halshow 失败: {e}")
+
+    @Property("QVariant", notify=currentSystemChanged)
+    def currentSystem(self):
+        return self._systems_payload()[self._currentIndex]
+
+    # ---- 坐标属性（_on_coord_changed 预缓存，避免 QML 读取时穿透 Status Property） ----
+    @Property(float, notify=systemsChanged)
+    def absoluteToolX(self): return getattr(self, '_cacheAbsX', 0.0)
+    @Property(float, notify=systemsChanged)
+    def absoluteToolY(self): return getattr(self, '_cacheAbsY', 0.0)
+    @Property(float, notify=systemsChanged)
+    def absoluteToolZ(self): return getattr(self, '_cacheAbsZ', 0.0)
+    @Property(float, notify=systemsChanged)
+    def absoluteToolA(self): return getattr(self, '_cacheAbsA', 0.0)
+    @Property(float, notify=systemsChanged)
+    def absoluteToolB(self): return getattr(self, '_cacheAbsB', 0.0)
+
+    @Property(float, notify=systemsChanged)
+    def displayToolX(self): return getattr(self, '_displayX', 0.0)
+    @Property(float, notify=systemsChanged)
+    def displayToolY(self): return getattr(self, '_displayY', 0.0)
+    @Property(float, notify=systemsChanged)
+    def displayToolZ(self): return getattr(self, '_displayZ', 0.0)
+    @Property(float, notify=systemsChanged)
+    def displayToolA(self): return getattr(self, '_displayA', 0.0)
+    @Property(float, notify=systemsChanged)
+    def displayToolB(self): return getattr(self, '_displayB', 0.0)
+    @Property(float, notify=systemsChanged)
+    def displayToolC(self): return getattr(self, '_displayC', 0.0)
+    
+    # homed/exists 属性已迁移至 Status 层：QML 直接使用 status.homedX / status.existsX 等
+
+    @Property(str, notify=machineConfigChanged)
+    def machineName(self):
+        return self._machineName
+
+    @Property(float, notify=machineConfigChanged)
+    def maxVelocity(self):
+        return self._maxVelocity
+
+    @Property(str, notify=machineConfigChanged)
+    def linearUnits(self) -> str:
+        return self._linearUnits
+
+    @Property(float, notify=machineConfigChanged)
+    def machineMinX(self): return self._config.min_limit_x if self._config else 0.0
+
+    @Property(float, notify=machineConfigChanged)
+    def machineMaxX(self): return self._config.max_limit_x if self._config else 500.0
+
+    @Property(float, notify=machineConfigChanged)
+    def machineMinY(self): return self._config.min_limit_y if self._config else 0.0
+
+    @Property(float, notify=machineConfigChanged)
+    def machineMaxY(self): return self._config.max_limit_y if self._config else 500.0
+
+    @Property(float, notify=machineConfigChanged)
+    def machineMinZ(self): return self._config.min_limit_z if self._config else 0.0
+
+    @Property(float, notify=machineConfigChanged)
+    def machineMaxZ(self): return self._config.max_limit_z if self._config else 300.0
+
+    # spindleSpeed / currentTool / floodOn / mistOn 已迁移至 Status 层
+    # QML 直接使用 status.spindleSpeed / status.toolInSpindle / status.flood / status.mist
+
+    # estop / machineOn / isAllHomed 已迁移至 Status 层
+    # QML 直接使用 status.taskState / status.isAllHomed
+
+    @Slot(int)
+    def setEstop(self, state: int) -> None:
+        self.cnc_command.setEstop(state)
+
+    @Slot(int)
+    def setMachinePower(self, state: int) -> None:
+        self.cnc_command.setMachinePower(state)
+
+    @Slot()
+    def togglePowerState(self) -> None:
+        self.clearAlarm()
+        is_on = self.cnc_status.taskState == "就绪"
+        is_estop = self.cnc_status.taskState == "急停"
+        if not is_on:
+            if is_estop:
+                self.setEstop(False)
+                QTimer.singleShot(100, lambda: self.setMachinePower(True))
+            else:
+                self.setMachinePower(True)
+        else:
+            self.setMachinePower(False)
+            self.setEstop(True)
+
+    @Slot()
+    def homeAll(self) -> None:
+        self.cnc_command.homeAll()
+        
+    @Slot()
+    def gotoSafeZ(self) -> None:
+        if hasattr(self.cnc_command, 'gotoSafeZ'):
+            self.cnc_command.gotoSafeZ()
+
+    @Slot(str)
+    def zeroAxis(self, axis_letter: str) -> None:
+        if hasattr(self.cnc_command, 'zero_axis'):
+            self.cnc_command.zero_axis(axis_letter)
+
+    @Slot()
+    def gotoXYZero(self) -> None:
+        # 为了防撞刀安全，无论处于什么坐标系，第一步必须先无条件提刀至机床绝对最高点 (G53 Z0)
+        self.cnc_command.mdi("G53 G0 Z0")
+        
+        # 第二步再进行 XY 平面的回零动作
+        if self.isMachineCoordActive:
+            self.cnc_command.mdi("G53 G0 X0 Y0")
+        else:
+            self.cnc_command.mdi("G0 X0 Y0")
+
+    @Slot()
+    def unhomeAll(self) -> None:
+        if hasattr(self.cnc_command, 'unhomeAll'):
+            self.cnc_command.unhomeAll()
+
+    @Slot(int)
+    def toggleHoming(self, axis_index: int) -> None:
+        if not self.cnc_command.cmd:
+            return
+        try:
+            is_homed = bool(self.cnc_status.homed[axis_index])
+            if is_homed:
+                self.cnc_command.unhomeAxis(axis_index)
+            else:
+                self.cnc_command.homeAxis(axis_index)
+        except IndexError:
+            pass
+
+    # ---- JOG 操作（委托 JogController） ----
+    @Slot(int, int)
+    def jogAxis(self, axis_index: int, direction: int) -> None:
+        self.jog_controller.jog(axis_index, direction)
+
+    @Slot()
+    def incJogSpeed(self) -> None:
+        self.jog_controller.incSpeed()
+
+    @Slot()
+    def decJogSpeed(self) -> None:
+        self.jog_controller.decSpeed()
+
+    @Slot(int)
+    def stopJog(self, axis_index: int) -> None:
+        self.jog_controller.jogStop(axis_index)
+
+    @Slot()
+    def toggleHomeAll(self) -> None:
+        if self.cnc_status.isAllHomed:
+            self.unhomeAll()
+        else:
+            self.homeAll()
+
+    @Slot()
+    def _on_homed_changed(self) -> None:
+        if self.cnc_status.isAllHomed:
+            if hasattr(self.cnc_command, 'setTeleopEnable'):
+                self.cnc_command.setTeleopEnable(True)
+
+    # ---- 倍率操作（委托 OverrideManager） ----
+    @Slot(int)
+    def setFeedOverride(self, percent: int) -> None:
+        self.override_mgr.setFeed(percent)
+
+    @Slot()
+    def incFeedOverride(self) -> None:
+        self.override_mgr.incFeed()
+
+    @Slot()
+    def decFeedOverride(self) -> None:
+        self.override_mgr.decFeed()
+
+    @Slot()
+    def resetFeedOverride(self) -> None:
+        self.override_mgr.resetFeed()
+
+    @Slot(int)
+    def setSpindleOverride(self, percent: int) -> None:
+        self.override_mgr.setSpindle(percent)
+
+    @Slot()
+    def incSpindleOverride(self) -> None:
+        self.override_mgr.incSpindle()
+
+    @Slot()
+    def decSpindleOverride(self) -> None:
+        self.override_mgr.decSpindle()
+        
+    @Slot()
+    def toggleSpindle(self) -> None:
+        if self.cnc_status.spindleDir == 0:
+            speed = self.cnc_status.programmedSpindle
+            if speed == 0:
+                speed = 1000 # Default if no speed programmed
+            self.setSpindle(1, speed)
+        else:
+            self.setSpindle(0, 0)
+
+    @Slot(int)
+    def setFlood(self, state: int) -> None:
+        self.cnc_command.setFlood(state)
+
+    @Property(bool, notify=coolantChanged)
+    def flood(self) -> bool:
+        return self.cnc_status.flood
+
+    # ---- 文件管理（委托 FileManager） ----
+    @Property("QVariantList", notify=fileBrowserChanged)
+    def fileList(self):       return self.file_mgr.fileList
+
+    @Property(str, notify=fileBrowserChanged)
+    def currentDir(self):     return self.file_mgr.currentDir
+
+    @Slot(str)
+    def changeDir(self, path: str):
+        self.file_mgr.changeDir(path)
+
+    @Slot(str)
+    def loadProgram(self, filepath: str):
+        self.file_mgr.loadProgram(filepath)
+
+    @Slot()
+    def reloadProgram(self):
+        self.file_mgr.reloadProgram()
+
+    @Slot()
+    def rewindProgram(self):
+        self.file_mgr.rewindProgram()
+
+    @Slot()
+    def closeProgram(self):
+        self.file_mgr.closeProgram()
+
+    @Slot()
+    def editProgram(self):
+        self.file_mgr.editProgram()
+
+    @Property("QVariantList", notify=programChanged)
+    def programLines(self):   return self.file_mgr.programLines
+
+    @Slot(int)
+    def setMist(self, state: int) -> None:
+        self.cnc_command.setMist(state)
+
+    @Property(bool, notify=coolantChanged)
+    def mist(self) -> bool:
+        return self.cnc_status.mist
+
+    @Slot(int, float)
+    def setSpindle(self, direction: int, speed: float) -> None:
+        self.cnc_command.setSpindle(direction, speed)
+
+    @Property(bool, notify=singleBlockChanged)
+    def singleBlockEnabled(self):
+        return self._singleBlockEnabled
+
+    @Slot()
+    def toggleSingleBlock(self) -> None:
+        self._singleBlockEnabled = not self._singleBlockEnabled
+        self.singleBlockChanged.emit()
+        if self._singleBlockEnabled and self.cnc_status.taskMode == "自动":
+            self.programPause()
+
+    # blockDelete 保留（QML 层访问 status.blockDelete 存在兼容问题）
+    @Property(bool, notify=blockDeleteChanged)
+    def blockDelete(self) -> bool:
+        return getattr(self.cnc_status, 'blockDelete', False)
+
+    @Slot()
+    def toggleBlockDelete(self) -> None:
+        current = getattr(self.cnc_status, 'blockDelete', False)
+        if hasattr(self.cnc_command, 'setBlockDelete'):
+            self.cnc_command.setBlockDelete(not current)
+
+    @Slot(bool)
+    def toggleRtcp(self, current_status: bool) -> None:
+        # 按照用户特制机床指令发送 MDI
+        # (M428 = 打通 RTCP， M429 = 关闭 RTCP)
+        print(f"[Backend] 收到前端切换 RTCP 请求。当前底层针脚真实状态: {current_status}")
+        if current_status:
+            self.cnc_command.mdi("M429")
+        else:
+            self.cnc_command.mdi("M428")
+
+    @Slot(int)
+    def programRun(self, line_number: int) -> None:
+        if self.cnc_status.interpState == 3:
+            if self._singleBlockEnabled:
+                self.cnc_command.programStep()
+            else:
+                self.cnc_command.programResume()
+        else:
+            self.cnc_command.programRun(line_number, is_idle=self.cnc_status.interpIdle)
+            if self._singleBlockEnabled:
+                QTimer.singleShot(100, self.programPause)
+
+    @Slot()
+    def programPause(self) -> None:
+        self.cnc_command.programPause()
+
+    @Slot()
+    def programStop(self) -> None:
+        self.cnc_command.programStop()
+
+    @Slot()
+    def clearAlarm(self) -> None:
+        self.cnc_status._has_error = False
+        self.cnc_status._error_text = ""
+        self.cnc_status.errorChanged.emit()
+        self.cnc_status._has_message = False
+        self.cnc_status._message_text = ""
+        self.cnc_status.messageChanged.emit()
+
+    @Slot()
+    def launchHalShow(self) -> None:
+        try:
+            subprocess.Popen(["halshow"])
+            print("[Backend] 已启动 halshow")
+        except Exception as e:
+            print(f"[Backend] 启动 halshow 失败: {e}")
+
+    @Property("QVariant", notify=machineConfigChanged)
+    def axisList(self):
+        return AXES
+
+    # feed / actualFeed 已迁移至 Status 层，QML 直接使用 status.feed / status.actualFeed
+
+    # ---- 倍率属性（委托 OverrideManager） ----
+    @Property(int, notify=feedChanged)
+    def feedLedState(self):     return self.override_mgr.feedLedState
+
+    @Property(float, notify=feedChanged)
+    def feedPercent(self):      return self.override_mgr.feedPercent
+
+    # toolNumber / toolDia / toolOffset 已迁移至 Status 层
+    # QML 直接使用 status.toolInSpindle / status.toolDiameter / status.toolOffsetZ
+
+    @Slot()
+    def toggleZInhibit(self):
+        print("[Backend] toggleZInhibit called")
+
+    @Slot()
+    def autoToolZero(self):
+        print("[Backend] autoToolZero called")
+
+    @Slot()
+    def rememberPosition(self):
+        print("[Backend] rememberPosition called")
+
+    @Slot()
+    def returnPosition(self):
+        print("[Backend] returnPosition called")
+
+    # spindle / programmedSpindle 已迁移至 Status 层
+    # spindleDir 保留（QML 层访问 status.spindleDir 存在兼容问题）
+
+    @Property(int, notify=spindleChanged)
+    def spindleDir(self) -> int:
+        return self.cnc_status.spindleDir
+
+    @Property(int, notify=spindleChanged)
+    def spindlePercent(self):   return self.override_mgr.spindlePercent
+
+    @Property(int, notify=spindleChanged)
+    def spindleLedState(self):  return self.override_mgr.spindleLedState
+
+    # machineMode / interpIdle / interpState / machineOn / isTeleop 保留（QML 访问兼容）
+
+    @Property(str, notify=machineChanged)
+    def machineMode(self) -> str:
+        return self.cnc_status.taskMode
+
+    @Property(bool, notify=machineChanged)
+    def machineOn(self) -> bool:
+        return self.cnc_status.taskState == "就绪"
+
+    @Property(bool, notify=machineChanged)
+    def isTeleop(self) -> bool:
+        return self.cnc_status.isTeleop
+
+    @Property(bool, notify=machineChanged)
+    def interpIdle(self) -> bool:
+        return self.cnc_status.interpIdle
+
+    @Property(int, notify=machineChanged)
+    def interpState(self) -> int:
+        return self.cnc_status.interpState
+
+    @Property(int, notify=machineChanged)
+    def motionType(self) -> int:
+        return getattr(self.cnc_status, '_motion_type', 0)
+
+    @Property(str, constant=True)
+    def logFilePath(self):
+        if not self.cnc_status.log_file:
+            return ""
+        path = self.cnc_status.log_file.replace('\\', '/')
+        if not path.startswith('/'):
+            path = '/' + path
+        return "file://" + path
+
+    # hasMessage / messageText 已迁移至 Status 层
+    # QML 直接使用 status.hasMessage / status.messageText
+
+    @Slot(str)
+    def setMachineMode(self, mode: str) -> None:
+        if mode == "手动":
+            self.cnc_command.setModeManual()
+        elif mode == "自动":
+            self.cnc_command.setModeAuto()
+        elif mode == "MDI":
+            self.cnc_command.setModeMDI()
+            
+    @Slot()
+    def toggleTaskMode(self) -> None:
+        current_mode = getattr(self.cnc_status, 'taskMode', "未知")
+        if current_mode == "手动":
+            self.setMachineMode("自动")
+        elif current_mode == "自动":
+            self.setMachineMode("MDI")
+        else:
+            self.setMachineMode("手动")
+
+    @Slot(str)
+    def submitCommand(self, text: str) -> None:
+        self.cnc_command.mdi(text)
+
+    @Property(str, notify=programChanged)
+    def modal(self): return self._modal
+
+    @Property(str, notify=programChanged)
+    def programName(self):
+        import os
+        pfile = self.cnc_status.programFile
+        if pfile and not pfile.endswith("empty.ngc"):
+            return os.path.basename(pfile)
+        return self._programName if self._programName else ""
+        
+    @Property(str, notify=programChanged)
+    def programFile(self):
+        pfile = self.cnc_status.programFile
+        if pfile and not pfile.endswith("empty.ngc"):
+            return pfile
+        return ""
+
+    @Property(int, notify=lineChanged)
+    def lineNumber(self): return self.cnc_status.motionLine
+
+    @Slot(int)
+    def requestRunFromLine(self, line: int):
+        self.cnc_command.requestRunFromLine(line, is_idle=self.cnc_status.interpIdle)
+
+    @Slot(int, 'QVariantMap')
+    def confirmRunFromLine(self, line: int, options: dict):
+        if hasattr(self.cnc_command, 'confirmRunFromLineWithOptions'):
+            self.cnc_command.confirmRunFromLineWithOptions(line, options, is_idle=self.cnc_status.interpIdle)
+        else:
+            self.cnc_command.confirmRunFromLine(line, is_idle=self.cnc_status.interpIdle)
+
+    @Property(str, constant=True)
+    def userName(self): return self._userName
+
+    @Property(str, notify=timeChanged)
+    def dateStr(self): return self.runtime_tracker.dateStr
+
+    @Property(str, notify=timeChanged)
+    def timeStr(self): return self.runtime_tracker.timeStr
+
+    # ---- JOG 属性（委托 JogController） ----
+    @Property(float, notify=machineChanged)
+    def jogPercent(self):       return self.jog_controller.jogPercent
+
+    @Property(int, notify=machineChanged)
+    def jogMode(self):          return self.jog_controller.jogMode
+
+    @Slot(int)
+    def setJogMode(self, mode: int):
+        self.jog_controller.setMode(mode)
+
+    @Property(int, notify=machineChanged)
+    def jogStepIndex(self):     return self.jog_controller.jogStepIndex
+
+    @Property(float, notify=machineChanged)
+    def currentJogStep(self):   return self.jog_controller.currentJogStep
+
+    @Slot(int)
+    def setJogStepIndex(self, index: int):
+        self.jog_controller.setStepIndex(index)
+
+    # ---- 工件偏置（委托 Status） ----
+    @Property(float, notify=systemsChanged)
+    def workOffsetX(self): return self.cnc_status.workOffsetX
+    @Property(float, notify=systemsChanged)
+    def workOffsetY(self): return self.cnc_status.workOffsetY
+    @Property(float, notify=systemsChanged)
+    def workOffsetZ(self): return self.cnc_status.workOffsetZ
+
+    # mpgActiveAxis / mpgScaleText 已迁移至 Status 层
+    # QML 直接使用 status.mpgActiveAxis / status.mpgScaleText

@@ -1,0 +1,41 @@
+""" {project_name} — 由 qmlvcp-builder 生成 """
+import os, sys
+
+{path_setup}
+
+from PySide6.QtCore import QUrl, QTimer
+from PySide6.QtGui import QGuiApplication, QSurfaceFormat
+from PySide6.QtQml import QQmlApplicationEngine
+
+from backend import Backend
+from qmlvcp.core.config import Config
+from qmlvcp.core.setup import init_qmlvcp
+
+
+def main():
+    fmt = QSurfaceFormat()
+    fmt.setSamples(4)
+    QSurfaceFormat.setDefaultFormat(fmt)
+
+    app = QGuiApplication(sys.argv)
+    engine = QQmlApplicationEngine()
+
+    ini_path = ""
+    for i, arg in enumerate(sys.argv):
+        if arg == "-ini" and i + 1 < len(sys.argv):
+            ini_path = sys.argv[i + 1]
+            break
+
+    config = Config(ini_path)
+    backend = Backend(config)
+
+    # 框架一键初始化 (自动处理: import路径/上下文注入/Geometry注册/HAL管理)
+    hal = init_qmlvcp(engine, qmlvcp_parent, backend, project_dir=base_dir)
+
+    engine.load(QUrl.fromLocalFile(os.path.join(base_dir, "qml", "Main.qml")))
+    QTimer.singleShot(500, lambda: hal.ready(ini_path))
+
+    return app.exec()
+
+if __name__ == "__main__":
+    sys.exit(main())

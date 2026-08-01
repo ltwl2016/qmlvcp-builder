@@ -1,0 +1,690 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ui version="4.0">
+ <class>MainWindow</class>
+ <widget class="QMainWindow" name="MainWindow">
+  <property name="geometry">
+   <rect>
+    <x>0</x>
+    <y>0</y>
+    <width>1280</width>
+    <height>800</height>
+   </rect>
+  </property>
+  <property name="windowTitle">
+   <string>QmlVcp Builder — CNC 界面拼装工具</string>
+  </property>
+  <widget class="QWidget" name="centralWidget">
+   <layout class="QVBoxLayout" name="rootLayout">
+    <item>
+     <layout class="QHBoxLayout" name="toolbarLayout">
+      <item>
+       <widget class="QLabel" name="lblProjectDir">
+        <property name="text">
+         <string>项目目录:</string>
+        </property>
+       </widget>
+      </item>
+      <item>
+       <widget class="QLineEdit" name="dirEdit"/>
+      </item>
+      <item>
+       <widget class="QPushButton" name="btnBrowse">
+        <property name="text">
+         <string>浏览...</string>
+        </property>
+       </widget>
+      </item>
+      <item>
+       <widget class="QPushButton" name="btnPreview">
+        <property name="toolTip">
+         <string>运行导出的项目程序</string>
+        </property>
+        <property name="text">
+         <string>预览</string>
+        </property>
+       </widget>
+      </item>
+      <item>
+       <widget class="QPushButton" name="btnOpenProject">
+        <property name="toolTip">
+         <string>打开已有项目</string>
+        </property>
+        <property name="text">
+         <string>📂 打开项目</string>
+        </property>
+       </widget>
+      </item>
+      <item>
+       <widget class="QPushButton" name="btnExport">
+        <property name="toolTip">
+         <string>导出完整项目到目标目录</string>
+        </property>
+        <property name="text">
+         <string>🚀 导出</string>
+        </property>
+       </widget>
+      </item>
+      <item>
+       <spacer name="toolbarSpacer1">
+        <property name="orientation">
+         <enum>Qt::Horizontal</enum>
+        </property>
+        <property name="sizeHint" stdset="0">
+         <size>
+          <width>20</width>
+          <height>20</height>
+         </size>
+        </property>
+       </spacer>
+      </item>
+      <item>
+       <widget class="QLabel" name="lblWindowSize">
+        <property name="text">
+         <string>窗口:</string>
+        </property>
+       </widget>
+      </item>
+      <item>
+       <widget class="QSpinBox" name="winWSpin">
+        <property name="toolTip">
+         <string>导出容器的总宽度</string>
+        </property>
+        <property name="minimum">
+         <number>320</number>
+        </property>
+        <property name="maximum">
+         <number>8000</number>
+        </property>
+        <property name="value">
+         <number>1280</number>
+        </property>
+       </widget>
+      </item>
+      <item>
+       <widget class="QLabel" name="lblTimes">
+        <property name="text">
+         <string>×</string>
+        </property>
+       </widget>
+      </item>
+      <item>
+       <widget class="QSpinBox" name="winHSpin">
+        <property name="toolTip">
+         <string>导出容器的总高度</string>
+        </property>
+        <property name="minimum">
+         <number>240</number>
+        </property>
+        <property name="maximum">
+         <number>6000</number>
+        </property>
+        <property name="value">
+         <number>800</number>
+        </property>
+       </widget>
+      </item>
+      <item>
+       <widget class="QCheckBox" name="chkMatchWinW">
+        <property name="toolTip">
+         <string>画布宽度跟随窗口宽度</string>
+        </property>
+        <property name="text">
+         <string>已可以允许导出....</string>
+        </property>
+       </widget>
+      </item>
+      <item>
+       <spacer name="toolbarSpacer2">
+        <property name="orientation">
+         <enum>Qt::Horizontal</enum>
+        </property>
+        <property name="sizeHint" stdset="0">
+         <size>
+          <width>40</width>
+          <height>20</height>
+         </size>
+        </property>
+       </spacer>
+      </item>
+      <item>
+       <widget class="QLabel" name="statusLabel">
+        <property name="text">
+         <string>就绪</string>
+        </property>
+       </widget>
+      </item>
+     </layout>
+    </item>
+    <item>
+     <widget class="QTabWidget" name="mainTabs">
+      <property name="currentIndex">
+       <number>1</number>
+      </property>
+      <widget class="QWidget" name="tabEnv">
+       <attribute name="title">
+        <string>① 环境设置</string>
+       </attribute>
+       <layout class="QVBoxLayout" name="envLayout">
+        <item>
+         <widget class="QGroupBox" name="grpEnvInfo">
+          <property name="title">
+           <string>项目环境</string>
+          </property>
+          <layout class="QFormLayout" name="envFormLayout">
+           <item row="0" column="0">
+            <widget class="QLabel" name="lblVenvLabel">
+             <property name="text">
+              <string>虚拟环境:</string>
+             </property>
+            </widget>
+           </item>
+           <item row="0" column="1">
+            <widget class="QLabel" name="lblVenv">
+             <property name="text">
+              <string>未检测</string>
+             </property>
+            </widget>
+           </item>
+           <item row="1" column="0">
+            <widget class="QLabel" name="lblPySide6Label">
+             <property name="text">
+              <string>PySide6:</string>
+             </property>
+            </widget>
+           </item>
+           <item row="1" column="1">
+            <widget class="QLabel" name="lblPySide6">
+             <property name="text">
+              <string>未检测</string>
+             </property>
+            </widget>
+           </item>
+          </layout>
+         </widget>
+        </item>
+        <item>
+         <layout class="QHBoxLayout" name="envBtnRow">
+          <item>
+           <widget class="QPushButton" name="btnCreateVenv">
+            <property name="text">
+             <string>创建虚拟环境</string>
+            </property>
+           </widget>
+          </item>
+          <item>
+           <widget class="QPushButton" name="btnInstallPySide6">
+            <property name="text">
+             <string>安装 PySide6</string>
+            </property>
+           </widget>
+          </item>
+          <item>
+           <spacer name="envBtnSpacer">
+            <property name="orientation">
+             <enum>Qt::Horizontal</enum>
+            </property>
+            <property name="sizeHint" stdset="0">
+             <size>
+              <width>40</width>
+              <height>20</height>
+             </size>
+            </property>
+           </spacer>
+          </item>
+         </layout>
+        </item>
+        <item>
+         <widget class="QProgressBar" name="envProgress">
+          <property name="maximum">
+           <number>0</number>
+          </property>
+          <property name="value">
+           <number>0</number>
+          </property>
+         </widget>
+        </item>
+        <item>
+         <widget class="QTextEdit" name="envLog">
+          <property name="maximumSize">
+           <size>
+            <width>16777215</width>
+            <height>200</height>
+           </size>
+          </property>
+          <property name="readOnly">
+           <bool>true</bool>
+          </property>
+         </widget>
+        </item>
+        <item>
+         <spacer name="envSpacer">
+          <property name="orientation">
+           <enum>Qt::Vertical</enum>
+          </property>
+          <property name="sizeHint" stdset="0">
+           <size>
+            <width>20</width>
+            <height>40</height>
+           </size>
+          </property>
+         </spacer>
+        </item>
+       </layout>
+      </widget>
+      <widget class="QWidget" name="tabAssembly">
+       <attribute name="title">
+        <string>② 界面拼装</string>
+       </attribute>
+       <layout class="QVBoxLayout" name="assemblyOuterLayout">
+        <property name="leftMargin">
+         <number>0</number>
+        </property>
+        <property name="topMargin">
+         <number>0</number>
+        </property>
+        <property name="rightMargin">
+         <number>0</number>
+        </property>
+        <property name="bottomMargin">
+         <number>0</number>
+        </property>
+        <item>
+         <widget class="QSplitter" name="assemblySplitter">
+          <property name="orientation">
+           <enum>Qt::Horizontal</enum>
+          </property>
+          <property name="handleWidth">
+           <number>3</number>
+          </property>
+          <property name="childrenCollapsible">
+           <bool>false</bool>
+          </property>
+          <widget class="QGroupBox" name="grpCtrlList">
+           <property name="minimumSize">
+            <size>
+             <width>170</width>
+             <height>0</height>
+            </size>
+           </property>
+           <property name="maximumSize">
+            <size>
+             <width>200</width>
+             <height>16777215</height>
+            </size>
+           </property>
+           <property name="title">
+            <string>控件列表</string>
+           </property>
+           <layout class="QVBoxLayout" name="ctrlListLayout">
+            <item>
+             <widget class="QPushButton" name="btnAddCanvas">
+              <property name="text">
+               <string>添加画布</string>
+              </property>
+             </widget>
+            </item>
+            <item>
+             <widget class="QLabel" name="lblCtrlHint">
+              <property name="text">
+               <string>双击列表项或选中后点按钮:</string>
+              </property>
+             </widget>
+            </item>
+            <item>
+             <widget class="QListWidget" name="ctrlList"/>
+            </item>
+            <item>
+             <widget class="QPushButton" name="btnAddControl">
+              <property name="text">
+               <string>双击控件添加到画布</string>
+              </property>
+             </widget>
+            </item>
+           </layout>
+          </widget>
+          <widget class="QWidget" name="canvasArea">
+           <layout class="QVBoxLayout" name="canvasLayout">
+            <item>
+             <layout class="QHBoxLayout" name="pageBarLayout">
+              <property name="spacing">
+               <number>4</number>
+              </property>
+              <item>
+               <widget class="QLabel" name="lblPage">
+                <property name="text">
+                 <string>页面:</string>
+                </property>
+               </widget>
+              </item>
+              <item>
+               <widget class="QPushButton" name="btnDelPage">
+                <property name="text">
+                 <string>×</string>
+                </property>
+                <property name="fixedSize" stdset="0">
+                 <size>
+                  <width>36</width>
+                  <height>30</height>
+                 </size>
+                </property>
+               </widget>
+              </item>
+              <item>
+               <widget class="QPushButton" name="btnAddPage">
+                <property name="text">
+                 <string>+</string>
+                </property>
+                <property name="fixedSize" stdset="0">
+                 <size>
+                  <width>36</width>
+                  <height>30</height>
+                 </size>
+                </property>
+               </widget>
+              </item>
+              <item>
+               <spacer name="pageBarSpacer">
+                <property name="orientation">
+                 <enum>Qt::Horizontal</enum>
+                </property>
+                <property name="sizeHint" stdset="0">
+                 <size>
+                  <width>0</width>
+                  <height>0</height>
+                 </size>
+                </property>
+               </spacer>
+              </item>
+             </layout>
+            </item>
+            <item>
+             <layout class="QHBoxLayout" name="zoomBarLayout">
+              <item>
+               <widget class="QLabel" name="lblBg">
+                <property name="text">
+                 <string>未加载背景</string>
+                </property>
+               </widget>
+              </item>
+              <item>
+               <widget class="QCheckBox" name="chkStackIdx">
+                <property name="toolTip">
+                 <string>打勾: StackLayout currentIndex=0 (主页0), 取消: currentIndex=1 (主页1)</string>
+                </property>
+                <property name="text">
+                 <string>主页0</string>
+                </property>
+                <property name="checked">
+                 <bool>true</bool>
+                </property>
+               </widget>
+              </item>
+              <item>
+               <spacer name="zoomSpacer">
+                <property name="orientation">
+                 <enum>Qt::Horizontal</enum>
+                </property>
+                <property name="sizeHint" stdset="0">
+                 <size>
+                  <width>0</width>
+                  <height>0</height>
+                 </size>
+                </property>
+               </spacer>
+              </item>
+              <item>
+               <widget class="QLabel" name="lblZoom">
+                <property name="text">
+                 <string>100%</string>
+                </property>
+               </widget>
+              </item>
+              <item>
+               <widget class="QPushButton" name="btnZoneToggle">
+                <property name="toolTip">
+                 <string>切换编辑左侧/右侧区域基础属性</string>
+                </property>
+                <property name="text">
+                 <string>左侧</string>
+                </property>
+                <property name="fixedSize" stdset="0">
+                 <size>
+                  <width>50</width>
+                  <height>16777215</height>
+                 </size>
+                </property>
+               </widget>
+              </item>
+              <item>
+               <widget class="QPushButton" name="btnZoomOut">
+                <property name="text">
+                 <string>-</string>
+                </property>
+                <property name="fixedSize" stdset="0">
+                 <size>
+                  <width>30</width>
+                  <height>16777215</height>
+                 </size>
+                </property>
+               </widget>
+              </item>
+              <item>
+               <widget class="QPushButton" name="btnZoomReset">
+                <property name="text">
+                 <string>1:1</string>
+                </property>
+                <property name="fixedSize" stdset="0">
+                 <size>
+                  <width>40</width>
+                  <height>16777215</height>
+                 </size>
+                </property>
+               </widget>
+              </item>
+              <item>
+               <widget class="QPushButton" name="btnZoomIn">
+                <property name="text">
+                 <string>+</string>
+                </property>
+                <property name="fixedSize" stdset="0">
+                 <size>
+                  <width>30</width>
+                  <height>16777215</height>
+                 </size>
+                </property>
+               </widget>
+              </item>
+             </layout>
+            </item>
+            <item>
+             <widget class="QScrollArea" name="canvasScroll">
+              <property name="frameShape">
+               <enum>QFrame::NoFrame</enum>
+              </property>
+              <property name="widgetResizable">
+               <bool>false</bool>
+              </property>
+              <widget class="QWidget" name="canvasViewport">
+               <property name="geometry">
+                <rect>
+                 <x>0</x>
+                 <y>0</y>
+                 <width>0</width>
+                 <height>0</height>
+                </rect>
+               </property>
+              </widget>
+             </widget>
+            </item>
+           </layout>
+          </widget>
+          <widget class="QGroupBox" name="grpProps">
+           <property name="minimumSize">
+            <size>
+             <width>200</width>
+             <height>0</height>
+            </size>
+           </property>
+           <property name="maximumSize">
+            <size>
+             <width>420</width>
+             <height>16777215</height>
+            </size>
+           </property>
+           <property name="title">
+            <string>控件属性</string>
+           </property>
+           <layout class="QVBoxLayout" name="propsOuterLayout">
+            <property name="leftMargin">
+             <number>0</number>
+            </property>
+            <property name="topMargin">
+             <number>0</number>
+            </property>
+            <property name="rightMargin">
+             <number>0</number>
+            </property>
+            <property name="bottomMargin">
+             <number>0</number>
+            </property>
+            <item>
+             <widget class="QLabel" name="propsInfo">
+              <property name="text">
+               <string>选中画布上的控件以编辑属性</string>
+              </property>
+             </widget>
+            </item>
+            <item>
+             <widget class="QScrollArea" name="propScroll">
+              <property name="widgetResizable">
+               <bool>true</bool>
+              </property>
+              <widget class="QWidget" name="propScrollContent">
+               <property name="geometry">
+                <rect>
+                 <x>0</x>
+                 <y>0</y>
+                 <width>255</width>
+                 <height>663</height>
+                </rect>
+               </property>
+              </widget>
+             </widget>
+            </item>
+            <item>
+             <widget class="QPushButton" name="btnDeleteControl">
+              <property name="text">
+               <string>删除选中控件</string>
+              </property>
+             </widget>
+            </item>
+           </layout>
+          </widget>
+         </widget>
+        </item>
+       </layout>
+      </widget>
+      <widget class="QWidget" name="tabExport">
+       <attribute name="title">
+        <string>③ 项目导出</string>
+       </attribute>
+       <layout class="QVBoxLayout" name="exportLayout">
+        <item>
+         <widget class="QLabel" name="lblExportPreview">
+          <property name="text">
+           <string>生成的 Main.qml 预览:</string>
+          </property>
+         </widget>
+        </item>
+        <item>
+         <widget class="QTextEdit" name="exportPreview">
+          <property name="font">
+           <font>
+            <family>Courier New</family>
+            <pointsize>10</pointsize>
+           </font>
+          </property>
+          <property name="readOnly">
+           <bool>true</bool>
+          </property>
+         </widget>
+        </item>
+        <item>
+         <layout class="QHBoxLayout" name="exportOptsRow">
+          <item>
+           <widget class="QCheckBox" name="chkBundle">
+            <property name="toolTip">
+             <string>勾选 = qmlvcp 打包进项目，开箱即用 (推荐)
+不勾选 = 需要手动将 qmlvcp 框架放在项目上级目录</string>
+            </property>
+            <property name="text">
+             <string>将 qmlvcp 框架复制到项目中（推荐：开箱即用）</string>
+            </property>
+            <property name="checked">
+             <bool>true</bool>
+            </property>
+           </widget>
+          </item>
+          <item>
+           <widget class="QCheckBox" name="chkStandalone">
+            <property name="toolTip">
+             <string>取消勾选 = 生成 Item 根元素（嵌入 LinuxCNC 使用）
+勾选 = 生成 Window 根元素（独立运行调试用）</string>
+            </property>
+            <property name="text">
+             <string>独立窗口模式 (Window)</string>
+            </property>
+            <property name="checked">
+             <bool>true</bool>
+            </property>
+           </widget>
+          </item>
+         </layout>
+        </item>
+        <item>
+         <layout class="QHBoxLayout" name="exportBtnRow">
+          <item>
+           <widget class="QPushButton" name="btnRefreshPreview">
+            <property name="text">
+             <string>刷新预览</string>
+            </property>
+           </widget>
+          </item>
+          <item>
+           <spacer name="exportBtnSpacer">
+            <property name="orientation">
+             <enum>Qt::Horizontal</enum>
+            </property>
+            <property name="sizeHint" stdset="0">
+             <size>
+              <width>0</width>
+              <height>0</height>
+             </size>
+            </property>
+           </spacer>
+          </item>
+         </layout>
+        </item>
+        <item>
+         <spacer name="exportSpacer">
+          <property name="orientation">
+           <enum>Qt::Vertical</enum>
+          </property>
+          <property name="sizeHint" stdset="0">
+           <size>
+            <width>0</width>
+            <height>0</height>
+           </size>
+          </property>
+         </spacer>
+        </item>
+       </layout>
+      </widget>
+     </widget>
+    </item>
+   </layout>
+  </widget>
+ </widget>
+ <resources/>
+ <connections/>
+</ui>

@@ -1,0 +1,33 @@
+# Python
+__pycache__/
+*.pyc
+*.pyo
+*.egg-info/
+dist/
+build/
+
+# Virtual environment
+venv/
+env/
+.venv/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+
+# PySide6 offline wheels (too large)
+offline_wheels/
+
+# Exported projects
+my-cnc/
+*.qmlc
+*.jsc
+
+# Logs
+*.log

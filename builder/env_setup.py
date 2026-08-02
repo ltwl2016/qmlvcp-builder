@@ -171,8 +171,12 @@ class EnvManager(QObject):
                 return
 
         try:
+            cmd = [sys.executable, "-m", "venv", self.venv_dir]
+            # LinuxCNC 环境下需要 --system-site-packages 才能 import linuxcnc/hal
+            if sys.platform != "win32":
+                cmd.insert(3, "--system-site-packages")
             subprocess.run(
-                [sys.executable, "-m", "venv", self.venv_dir],
+                cmd,
                 check=True, capture_output=True, timeout=60
             )
             self.statusChanged.emit("虚拟环境创建成功")

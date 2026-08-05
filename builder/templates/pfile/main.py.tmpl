@@ -26,6 +26,10 @@ def main():
             ini_path = sys.argv[i + 1]
             break
 
+    # 把 CWD 切到 INI 所在目录，确保 PostGUI hal 文件内的相对路径 source 能正确解析
+    if ini_path:
+        os.chdir(os.path.dirname(os.path.abspath(ini_path)))
+
     config = Config(ini_path)
     backend = Backend(config)
 

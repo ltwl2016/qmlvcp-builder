@@ -23,6 +23,7 @@ import os
 _TEMPLATE_DIR = os.path.dirname(__file__)
 
 _FILE_MAP = {
+    "HalInputMonitor":     "HalInputMonitor.qml",
     "ImageButton":          "ImageButton.qml",
     "JOGButton":            "JOGButton.qml",
     "SpriteButton":         "SpriteButton.qml",
@@ -61,4 +62,4 @@ def get_template(ctype: str) -> str:
         _CACHE[ctype] = tmpl
     return _CACHE[ctype]
 
-from .controls import CONTROLS
+from .control_defs import CONTROLS

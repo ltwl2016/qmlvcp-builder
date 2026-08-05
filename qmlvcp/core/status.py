@@ -636,6 +636,14 @@ class Status(QObject):
     @Property(float, notify=positionChanged)
     def machineC(self): return self._actual_position[5] if len(self._actual_position)>5 else 0.0
 
+    # ---------------- G5x 工件偏置单轴暴露 ----------------
+    @Property(float, notify=positionChanged)
+    def workOffsetX(self): return self._g5x_offset[0] if len(self._g5x_offset)>0 else 0.0
+    @Property(float, notify=positionChanged)
+    def workOffsetY(self): return self._g5x_offset[1] if len(self._g5x_offset)>1 else 0.0
+    @Property(float, notify=positionChanged)
+    def workOffsetZ(self): return self._g5x_offset[2] if len(self._g5x_offset)>2 else 0.0
+
     @Property(bool, notify=homedChanged)
     def homedX(self): return self._homed[0] if len(self._homed)>0 else False
     @Property(bool, notify=homedChanged)

@@ -483,7 +483,7 @@ def _copy_dir(src: str, dst: str, skip_pycache: bool = True):
     shutil.copytree(
         src, dst,
         ignore=shutil.ignore_patterns(
-            "__pycache__", "*.pyc", "*.so", "*.cpp"
+            "__pycache__", "*.pyc", "*.cpp"
         ) if skip_pycache else None,
     )
 

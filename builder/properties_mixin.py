@@ -121,7 +121,7 @@ class PropertiesMixin:
 
         """在 propScrollContent 中构建属性编辑表单 (动态)。"""
 
-        from builder.controls import ACTIONS, STATUS_BINDS
+        from builder.controls import get_all_actions, get_all_binds
 
         container = self.propScrollContent
 
@@ -289,7 +289,7 @@ class PropertiesMixin:
 
         self._prop_action.setInsertPolicy(QComboBox.NoInsert)
 
-        self._prop_action.addItems([""] + list(ACTIONS))
+        self._prop_action.addItems([""] + list(get_all_actions()))
 
         self._prop_action.currentTextChanged.connect(self._on_prop_changed)
 
@@ -309,7 +309,7 @@ class PropertiesMixin:
 
         self._prop_bind.setInsertPolicy(QComboBox.NoInsert)
 
-        self._prop_bind.addItems([""] + list(STATUS_BINDS))
+        self._prop_bind.addItems([""] + list(get_all_binds()))
 
         self._prop_bind.currentTextChanged.connect(self._on_prop_changed)
 
@@ -988,11 +988,42 @@ class PropertiesMixin:
 
 
 
+    def _repopulate_combo(self, combo, items_dict):
+        """以 items_dict 的 key 重新填充一个可编辑下拉框，不触发信号。"""
+        values = [""] + list(items_dict)
+        combo.blockSignals(True)
+        combo.clear()
+        combo.addItems(values)
+        combo.blockSignals(False)
+
+
     def _write_prop_fields(self, ctrl: dict):
 
         """从 control dict 写入属性面板控件。"""
 
-        from builder.controls import ACTIONS, STATUS_BINDS
+        from builder.controls import get_actions, get_binds
+
+        ctype = ctrl.get("type", "")
+        actions = get_actions(ctype)
+        binds = get_binds(ctype)
+
+        # 动态追加当前编辑区所有 HalInputMonitor 的绑定选项（xxx.开关 / xxx.数值）
+        for c in self._active_controls:
+            if c.get("type") == "HalInputMonitor":
+                cid = c.get("id", "").strip()
+                if cid:
+                    binds[f"{cid}.开关"] = f"{cid}.active"
+                    binds[f"{cid}.数值"] = f"{cid}.value"
+
+        # 按控件类型重新填充动作/绑定下拉框
+        self._repopulate_combo(self._prop_action, actions)
+        self._repopulate_combo(self._prop_bind, binds)
+
+        # 如果 JOGButton 的 action_press / action_release 下拉框也存在，同步过滤
+        for fname in ("action_press", "action_release"):
+            w = self._field_widgets.get(fname)
+            if w and isinstance(w, QComboBox):
+                self._repopulate_combo(w, actions)
 
         for name, (w, kind, default) in self._prop_map().items():
 
@@ -1028,7 +1059,7 @@ class PropertiesMixin:
 
                 # 实际值 → 显示名（backend.jogAxis(0,1) → JOG_X+）
 
-                name_map = {v: k for k, v in ACTIONS.items()}
+                name_map = {v: k for k, v in actions.items()}
 
                 label = name_map.get(str(val), str(val))
 
@@ -1040,7 +1071,7 @@ class PropertiesMixin:
 
             elif kind == "bind_combo":
 
-                name_map = {v: k for k, v in STATUS_BINDS.items()}
+                name_map = {v: k for k, v in binds.items()}
 
                 label = name_map.get(str(val), str(val))
 
@@ -1093,7 +1124,19 @@ class PropertiesMixin:
 
         """从属性面板控件读取值，写回 control dict。"""
 
-        from builder.controls import ACTIONS, STATUS_BINDS
+        from builder.controls import get_actions, get_binds
+
+        ctype = ctrl.get("type", "")
+        actions = get_actions(ctype)
+        binds = get_binds(ctype)
+
+        # 与 _write_prop_fields 保持一致：动态追加当前编辑区 HalInputMonitor 的绑定选项
+        for c in self._active_controls:
+            if c.get("type") == "HalInputMonitor":
+                cid = c.get("id", "").strip()
+                if cid:
+                    binds[f"{cid}.开关"] = f"{cid}.active"
+                    binds[f"{cid}.数值"] = f"{cid}.value"
 
         for name, (w, kind, default) in self._prop_map().items():
 
@@ -1131,11 +1174,11 @@ class PropertiesMixin:
 
                     # 下拉显示名 → 实际值（JOG_X+ → backend.jogAxis(0,1)）
 
-                    ctrl[name] = ACTIONS.get(w.currentText(), w.currentText())
+                    ctrl[name] = actions.get(w.currentText(), w.currentText())
 
                 elif kind == "bind_combo":
 
-                    ctrl[name] = STATUS_BINDS.get(w.currentText(), w.currentText())
+                    ctrl[name] = binds.get(w.currentText(), w.currentText())
 
                 elif kind == "combo":
 
@@ -1235,7 +1278,9 @@ class PropertiesMixin:
 
 
 
-        bind_actual = STATUS_BINDS.get(bind_val, bind_val)
+        from builder.controls import get_all_binds
+        all_binds = get_all_binds()
+        bind_actual = all_binds.get(bind_val, bind_val)
 
         if not bind_actual:
 

@@ -22,6 +22,17 @@ TextInput {
     
     // --- 对外暴露的核心绑定属性 ---
     property int decimals: 4         // 默认保留的小数位数（整数设为0即可）
+    property real displayValue: 0.0
+    
+    Component.onCompleted:{
+        text = displayValue.toFixed(root.decimals)
+    }    
+    onDisplayValueChanged:{
+        if (!activeFocus) {
+            text = displayValue.toFixed(root.decimals)
+         }
+    
+    }
     
     // --- 默认 UI 外观（可通过外部覆写） ---
     color: "black"

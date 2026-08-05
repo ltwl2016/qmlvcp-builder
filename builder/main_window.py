@@ -37,7 +37,7 @@ from builder.project_exporter import export_project
 from builder.preview_canvas import PreviewCanvas, _setup_combo_search
 from builder.properties_mixin import PropertiesMixin
 from builder.controls import (
-    ACTIONS, STATUS_BINDS, get_display_list, get_defaults, get_properties
+    get_display_list, get_defaults, get_properties
 )
 
 WINDOW_TITLE = "QmlVcp Builder — CNC 界面拼装工具"

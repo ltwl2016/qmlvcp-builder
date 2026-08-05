@@ -26,118 +26,11 @@
 """
 
 import os
-from backend_actions_binds import ACTIONS as _NEW_ACTIONS, STATUS_BINDS as _NEW_STATUS_BINDS
+from backend_actions_binds import get_actions, get_binds, get_all_actions, get_all_binds
 
 CONTROLS = []
 from builder.templates import CONTROLS as _cts
 CONTROLS = _cts
-
-
-# ====================================================================
-#  预定义动作 / 绑定列表
-# ====================================================================
-
-ACTIONS = {
-    # ── 指令 (command，优先) ──
-    "--- command ---":  "",
-    "cmd.homeAll":      "command.homeAll()",
-    "cmd.unhomeAll":    "command.unhomeAll()",
-    "cmd.homeX":        "command.homeAxis(0)",
-    "cmd.homeY":        "command.homeAxis(1)",
-    "cmd.homeZ":        "command.homeAxis(2)",
-    "cmd.homeA":        "command.homeAxis(3)",
-    "cmd.modeManual":   "command.setModeManual()",
-    "cmd.modeAuto":     "command.setModeAuto()",
-    "cmd.modeMDI":      "command.setModeMDI()",
-    "cmd.estop":        "command.setEstop(1)",
-    "cmd.estopReset":   "command.setEstop(0)",
-    "cmd.powerOn":      "command.setMachinePower(1)",
-    "cmd.powerOff":     "command.setMachinePower(0)",
-    "cmd.zeroX":        'command.zero_axis("X")',
-    "cmd.zeroY":        'command.zero_axis("Y")',
-    "cmd.zeroZ":        'command.zero_axis("Z")',
-    "cmd.safeZ":        "command.gotoSafeZ()",
-    "cmd.floodOn":      "command.setFlood(1)",
-    "cmd.floodOff":     "command.setFlood(0)",
-    "cmd.mistOn":       "command.setMist(1)",
-    "cmd.mistOff":      "command.setMist(0)",
-    "cmd.spindleCW":    "command.setSpindle(1, 0)",
-    "cmd.spindleCCW":   "command.setSpindle(-1, 0)",
-    "cmd.spindleStop":  "command.setSpindle(0, 0)",
-    "cmd.progRun":      "command.programRun(0)",
-    "cmd.progPause":    "command.programPause()",
-    "cmd.progResume":   "command.programResume()",
-    "cmd.progStop":     "command.programStop()",
-    "cmd.progOpen":     "command.programOpen(backend.programFile)",
-    "cmd.progRewind":   "command.programRewind()",
-    "cmd.progSetLine":  "command.programSetLine(currentLine)",
-    "cmd.blockDel":     "command.setBlockDelete(!status.blockDelete)",
-
-    # ── MDI 指令 ──
-    "--- MDI ---":      "",
-    "mdi.G0_X0Y0":      'command.mdi("G0 X0 Y0")',
-    "mdi.G28":          'command.mdi("G28")',
-    "mdi.G53_Z0":       'command.mdi("G53 Z0")',
-    "mdi.fromValue":    'command.mdi("G10 L20 P1 X" + value)',
-    "mdi.G92.1":        'command.mdi("G92.1")',
-
-    # ── 页面切换 ──
-    "--- 页面切换 ---": "",
-    "page.主页":         "stack.currentIndex = 0",
-    "page.page1":         "stack.currentIndex = 1",
-    "page.page2":         "stack.currentIndex = 2",
-    "page.page3":         "stack.currentIndex = 3",
-    "page.page4":         "stack.currentIndex = 4",
-    "page.page5":         "stack.currentIndex = 5",
-
-    "CUSTOM":           "",
-
-    # ═══════════════════════════════════════════
-    # ▼ 以下来自 backend_actions_binds.py，便于日后整块删除
-    # ═══════════════════════════════════════════
-}
-
-STATUS_BINDS = {
-    # ── 状态 (status 优先) ──
-    "--- status ---":   "",
-    "st.homedX":        "status.homedX",
-    "st.homedY":        "status.homedY",
-    "st.homedZ":        "status.homedZ",
-    "st.homedA":        "status.homedA",
-    "st.isAllHomed":    "status.isAllHomed",
-    "st.hasError":      "status.hasError",
-    "st.interpIdle":    "status.interpIdle",
-    "st.spindleSpeed":  "status.spindleSpeed",
-    "st.spindleDir":    "status.spindleDir",
-    "st.spindleOverride": "status.spindleOverride",
-    "st.feed":          "status.feed",
-    "st.actualFeed":    "status.actualFeed",
-    "st.feedOverride":  "status.feedOverride",
-    "st.flood":         "status.flood",
-    "st.mist":          "status.mist",
-    "st.toolInSpindle": "status.toolInSpindle",
-    "st.toolDiameter":  "status.toolDiameter",
-    "st.toolOffsetZ":   "status.toolOffsetZ",
-    "st.motionLine":    "status.motionLine",
-    "st.readLine":      "status.readLine",
-    "st.blockDelete":   "status.blockDelete",
-    "st.machineMode":   "status.taskMode",
-    "st.interpState":   "status.interpState",
-    "st.absoluteX":     "status.absoluteX",
-    "st.absoluteY":     "status.absoluteY",
-    "st.absoluteZ":     "status.absoluteZ",
-    "st.machineX":      "status.machineX",
-    "st.machineY":      "status.machineY",
-    "st.machineZ":      "status.machineZ",
-
-    # ═══════════════════════════════════════════
-    # ▼ 以下来自 backend_actions_binds.py，便于日后整块删除
-    # ═══════════════════════════════════════════
-}
-
-# ── 合并 backend 动作/绑定（保留旧值，新值追加） ──
-ACTIONS.update(_NEW_ACTIONS)
-STATUS_BINDS.update(_NEW_STATUS_BINDS)
 
 # ====================================================================
 #  属性中文说明 & 可绑定列表
@@ -313,7 +206,7 @@ def get_display_list():
         if cat not in seen:
             result.append({"name": f"--- {cat} ---", "type": None})
             seen.add(cat)
-        result.append({"name": c["type"], "type": c["type"]})
+        result.append({"name": c.get("displayName", c["type"]), "type": c["type"]})
     return result
 
 def get_defaults(ctype):
@@ -443,6 +336,7 @@ def fill_template(ctrl):
     result = re.sub(r'                text: \n', '', result)
     result = re.sub(r'                gcodeLines: \n', '', result)
     result = re.sub(r'                onClicked: \n', '', result)
+    result = re.sub(r'                id: \n', '', result)
     result = result.replace("$extraQml", "")
 
     # 注入手写备用属性（extraQml）到控件定义末尾

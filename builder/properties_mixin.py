@@ -21,7 +21,7 @@ from PyQt5.QtCore import Qt
 from PyQt5.QtWidgets import (
     QWidget, QComboBox, QSpinBox, QDoubleSpinBox, QLineEdit,
     QCheckBox, QFileDialog, QFormLayout, QVBoxLayout, QHBoxLayout,
-    QPushButton,
+    QPushButton, QLabel, QLayout,
 )
 from PyQt5.QtGui import QPixmap
 
@@ -107,13 +107,82 @@ class PropertiesMixin:
 
 
 
-            self._props_form.addRow(label + ":", w)
+            self._add_prop_row(label + ":", w, name)
 
             widgets[name] = w
 
 
 
         return widgets
+
+
+
+    def _add_prop_row(self, label, field, key=None):
+
+        """创建一个属性行（label + field 放进同一行容器）。
+
+        行容器加入垂直布局；QVBoxLayout 对 setVisible(False) 的行会自动压缩不占位，
+        从而避免隐藏行留下空洞导致可见行间距不均。
+
+        field 可以是 widget，也可以是 QLayout（如宽/高/贴图等组合行）。
+        """
+
+        row = QWidget()
+
+        hl = QHBoxLayout(row)
+
+        hl.setContentsMargins(0, 0, 0, 0)
+
+        hl.setSpacing(6)
+
+        # label 统一宽度并左对齐，使各行的字段从同一位置开始，观感整齐
+
+        lbl = QLabel(label)
+
+        lbl.setMinimumWidth(80)
+
+        lbl.setAlignment(Qt.AlignLeft | Qt.AlignVCenter)
+
+        hl.addWidget(lbl)
+
+        if isinstance(field, QLayout):
+
+            # 组合行（含按钮）同样靠左、自适应宽度，左边缘固定
+            hl.addLayout(field)
+
+        else:
+
+            # 字段靠左、宽度自适应内容；右侧弹簧吸收剩余空间，使左边缘固定。
+            # （若用 Expanding+stretch 填满，setMaximumWidth 时字段会被推到右侧、右边缘固定，不符合预期）
+            hl.addWidget(field)
+
+        hl.addStretch(1)
+
+        self._props_form.addWidget(row)
+
+        if key is not None:
+
+            self._row_widgets[key] = row
+
+        # 记录 field widget → label widget 映射（供 tooltip 使用）
+
+        fw = None
+
+        if not isinstance(field, QLayout):
+
+            fw = field
+
+        elif field.count():
+
+            it = field.itemAt(0)
+
+            fw = it.widget() if it else None
+
+        if fw is not None:
+
+            self._field_to_label[fw] = lbl
+
+        return row
 
 
 
@@ -144,11 +213,17 @@ class PropertiesMixin:
 
 
 
-        self._props_form = QFormLayout()
+        # 属性面板改用 QVBoxLayout + 行 widget（每行一个容器，未显示的行自动压缩不占位）
+
+        self._props_form = QVBoxLayout()
+
+        self._props_form.setSpacing(2)
 
         container.layout().addLayout(self._props_form)
 
+        self._row_widgets = {}       # 字段名 → 行容器 widget
 
+        self._field_to_label = {}    # field widget → label widget
 
         # 类型选择
 
@@ -162,7 +237,7 @@ class PropertiesMixin:
 
         self._prop_type.currentTextChanged.connect(self._on_prop_type_changed)
 
-        self._props_form.addRow(Tr.t("_prop_type.s2_436358", "Type:"), self._prop_type)
+        self._add_prop_row(Tr.t("_prop_type.s2_436358", "Type:"), self._prop_type, "type")
 
 
 
@@ -174,7 +249,7 @@ class PropertiesMixin:
 
         self._prop_id.textChanged.connect(self._on_prop_changed)
 
-        self._props_form.addRow("ID:", self._prop_id)
+        self._add_prop_row("ID:", self._prop_id, "id")
 
 
 
@@ -186,7 +261,7 @@ class PropertiesMixin:
 
         self._prop_x.valueChanged.connect(self._on_prop_changed)
 
-        self._props_form.addRow("X:", self._prop_x)
+        self._add_prop_row("X:", self._prop_x, "x")
 
 
 
@@ -198,7 +273,7 @@ class PropertiesMixin:
 
         self._prop_y.valueChanged.connect(self._on_prop_changed)
 
-        self._props_form.addRow("Y:", self._prop_y)
+        self._add_prop_row("Y:", self._prop_y, "y")
 
 
 
@@ -226,7 +301,7 @@ class PropertiesMixin:
 
         w_row.addWidget(self._chk_right_w)
 
-        self._props_form.addRow(Tr.t("_chk_right_w.s6_2589e7", "Width:"), w_row)
+        self._add_prop_row(Tr.t("_chk_right_w.s6_2589e7", "Width:"), w_row, "w")
 
 
 
@@ -254,7 +329,7 @@ class PropertiesMixin:
 
         h_row.addWidget(self._chk_bottom_h)
 
-        self._props_form.addRow(Tr.t("_chk_bottom_h.s9_8084a2", "Height:"), h_row)
+        self._add_prop_row(Tr.t("_chk_bottom_h.s9_8084a2", "Height:"), h_row, "h")
 
 
 
@@ -278,7 +353,7 @@ class PropertiesMixin:
 
         src_row.addWidget(self._btn_browse_src)
 
-        self._props_form.addRow(Tr.t("_btn_browse_src.s10_cd9887", "Image:"), src_row)
+        self._add_prop_row(Tr.t("_btn_browse_src.s10_cd9887", "Image:"), src_row, "src")
 
 
 
@@ -296,7 +371,7 @@ class PropertiesMixin:
 
         _setup_combo_search(self._prop_action)
 
-        self._props_form.addRow(Tr.t("_prop_action.s11_3cf4dc", "Action:"), self._prop_action)
+        self._add_prop_row(Tr.t("_prop_action.s11_3cf4dc", "Action:"), self._prop_action, "action")
 
         self._prop_action.setToolTip(Tr.t("_prop_action.s12_7b14d2", "Filter: home, jog, spindle…"))
 
@@ -316,7 +391,7 @@ class PropertiesMixin:
 
         _setup_combo_search(self._prop_bind)
 
-        self._props_form.addRow(Tr.t("_prop_bind.s13_df01b3", "Bind:"), self._prop_bind)
+        self._add_prop_row(Tr.t("_prop_bind.s13_df01b3", "Bind:"), self._prop_bind, "bind")
 
         self._prop_bind.setToolTip(Tr.t("_prop_bind.s14_5cf817", "Filter: spindle, mode, homed…"))
 
@@ -428,7 +503,7 @@ class PropertiesMixin:
 
         psrc_row.addWidget(self._btn_browse_psrc)
 
-        self._props_form.addRow(Tr.t("_btn_browse_psrc.s16_dc4685", "Alt image:"), psrc_row)
+        self._add_prop_row(Tr.t("_btn_browse_psrc.s16_dc4685", "Alt image:"), psrc_row, "pressedSource")
 
 
 
@@ -440,7 +515,7 @@ class PropertiesMixin:
 
         self._prop_active_line_bind.textChanged.connect(self._on_prop_changed)
 
-        self._props_form.addRow("  ↳ 绑定:", self._prop_active_line_bind)
+        self._add_prop_row("  ↳ 绑定:", self._prop_active_line_bind, "activeLineBind")
 
 
 
@@ -450,7 +525,7 @@ class PropertiesMixin:
 
         self._prop_allow_sel_bind.textChanged.connect(self._on_prop_changed)
 
-        self._props_form.addRow("  ↳ 绑定:", self._prop_allow_sel_bind)
+        self._add_prop_row("  ↳ 绑定:", self._prop_allow_sel_bind, "allowSelectionBind")
 
 
 
@@ -460,7 +535,7 @@ class PropertiesMixin:
 
         self._prop_active_bind.textChanged.connect(self._on_prop_changed)
 
-        self._props_form.addRow("  ↳ 绑定:", self._prop_active_bind)
+        self._add_prop_row("  ↳ 绑定:", self._prop_active_bind, "activeBind")
 
 
 
@@ -470,7 +545,7 @@ class PropertiesMixin:
 
         self._prop_value_bind.textChanged.connect(self._on_prop_changed)
 
-        self._props_form.addRow("  ↳ 绑定:", self._prop_value_bind)
+        self._add_prop_row("  ↳ 绑定:", self._prop_value_bind, "valueBind")
 
 
 
@@ -480,7 +555,7 @@ class PropertiesMixin:
 
         self._prop_source_clip_bind.textChanged.connect(self._on_prop_changed)
 
-        self._props_form.addRow("  ↳ 绑定:", self._prop_source_clip_bind)
+        self._add_prop_row("  ↳ 绑定:", self._prop_source_clip_bind, "sourceClipRectBind")
 
 
 
@@ -506,7 +581,7 @@ class PropertiesMixin:
 
         sframe_row.addWidget(self._btn_gen_sprite)
 
-        self._props_form.addRow(Tr.t("_btn_gen_sprite.s29_514f17", "Sprite frame:"), sframe_row)
+        self._add_prop_row(Tr.t("_btn_gen_sprite.s29_514f17", "Sprite frame:"), sframe_row, "spriteFrame")
 
         self._prop_sprite_frame_bind = QLineEdit()
 
@@ -514,49 +589,11 @@ class PropertiesMixin:
 
         self._prop_sprite_frame_bind.textChanged.connect(self._on_prop_changed)
 
-        self._props_form.addRow("  ↳ 绑定:", self._prop_sprite_frame_bind)
+        self._add_prop_row("  ↳ 绑定:", self._prop_sprite_frame_bind, "spriteFrameBind")
 
 
 
-        # 建立 field_widget → label_widget 映射
-
-        self._field_to_label = {}
-
-        for i in range(self._props_form.rowCount()):
-
-            fi = self._props_form.itemAt(i, QFormLayout.FieldRole)
-
-            li = self._props_form.itemAt(i, QFormLayout.LabelRole)
-
-            if not (fi and li):
-
-                continue
-
-            lw = li.widget()
-
-            if not lw:
-
-                continue
-
-            fw = fi.widget()
-
-            if not fw and fi.layout():
-
-                for j in range(fi.layout().count()):
-
-                    child = fi.layout().itemAt(j)
-
-                    if child and child.widget():
-
-                        fw = child.widget()
-
-                        break
-
-            if fw:
-
-                self._field_to_label[fw] = lw
-
-
+        # field_widget → label_widget 映射已由 _add_prop_row 维护，无需再遍历构建。
 
         # 合并手动 + 工厂 widget，统一入口
 
@@ -596,19 +633,17 @@ class PropertiesMixin:
 
 
 
-        # 初始隐藏全部属性行
+        # 初始隐藏全部属性行（整行容器隐藏，QVBoxLayout 自动压缩不占位）
 
-        for key in self._prop_widgets:
+        for key, row in self._row_widgets.items():
 
-            w = self._prop_widgets[key]
+            row.setVisible(False)
 
-            w.setVisible(False)
+        # 类型行始终置顶显示（不随选中控件隐藏）
 
-            lbl = self._field_to_label.get(w)
+        if "type" in self._row_widgets:
 
-            if lbl:
-
-                lbl.setVisible(False)
+            self._row_widgets["type"].setVisible(True)
 
 
 
@@ -1352,7 +1387,18 @@ class PropertiesMixin:
 
     def _set_row_visible(self, key: str, visible: bool):
 
-        """隐藏/显示属性整行（label + widget）。"""
+        """隐藏/显示属性整行。
+
+        优先隐藏整个行容器（label + field 一起），QVBoxLayout 对隐藏行自动压缩不占位，
+        从而避免"被隐藏行隔开导致可见行间距不均"。无独立行的 key（如 half 复选框）
+        回退到隐藏 widget 本体。
+        """
+
+        if key in self._row_widgets:
+
+            self._row_widgets[key].setVisible(visible)
+
+            return
 
         pm = self._prop_map()
 
@@ -1362,29 +1408,9 @@ class PropertiesMixin:
 
         w, kind, default = pm[key]
 
-        # 控件本体
+        # 无独立行时，隐藏控件本体
 
         w.setVisible(visible)
-
-        # 同行 QLabel
-
-        if w in self._field_to_label:
-
-            self._field_to_label[w].setVisible(visible)
-
-        # 关联的浏览按钮
-
-        if key == "src" and hasattr(self, '_btn_browse_src'):
-
-            self._btn_browse_src.setVisible(visible)
-
-        if key == "pressedSource" and hasattr(self, '_btn_browse_psrc'):
-
-            self._btn_browse_psrc.setVisible(visible)
-
-        if key == "spriteFrame" and hasattr(self, '_btn_gen_sprite'):
-
-            self._btn_gen_sprite.setVisible(visible)
 
 
 

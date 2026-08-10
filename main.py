@@ -24,6 +24,11 @@ import os
 import sys
 from PyQt5.QtWidgets import QApplication
 from PyQt5.QtGui import QFont
+from lang import Tr
+
+# 默认英文（代码 fallback 即英文），如需中文请改为 Tr.load("zh_CN")
+Tr.load("zh_CN")
+
 from builder.main_window import MainWindow
 
 

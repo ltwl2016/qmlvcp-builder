@@ -24,6 +24,7 @@ import subprocess
 import sys
 import threading
 from PyQt5.QtCore import QObject, pyqtSignal
+from lang import Tr
 
 
 class EnvManager(QObject):
@@ -124,32 +125,32 @@ class EnvManager(QObject):
 
     def _install_system_venv(self):
         """Debian/Ubuntu 上安装 python3-venv 系统包。"""
-        self.statusChanged.emit("正在安装系统包 python3-venv ...")
+        self.statusChanged.emit(Tr.t("_install_system_venv.s7_acbd0e", "Installing python3-venv..."))
         try:
             subprocess.run(
                 ["sudo", "apt-get", "install", "-y", "python3-venv"],
                 check=True, capture_output=True, timeout=120
             )
-            self.statusChanged.emit("python3-venv 系统包安装成功")
+            self.statusChanged.emit(Tr.t("_install_system_venv.s8_4d561e", "python3-venv installed successfully"))
             return True
         except subprocess.CalledProcessError as e:
             err = e.stderr.decode()[:300] if e.stderr else str(e)
             self.statusChanged.emit(f"系统包安装失败: {err}")
             return False
         except FileNotFoundError:
-            self.statusChanged.emit("未找到 sudo 或 apt-get 命令")
+            self.statusChanged.emit(Tr.t("_install_system_venv.s9_3b6632", "sudo or apt-get not found"))
             return False
         except Exception as e:
             self.statusChanged.emit(f"系统包安装异常: {e}")
             return False
 
     def _create_venv_thread(self):
-        self.statusChanged.emit("正在创建虚拟环境...")
+        self.statusChanged.emit(Tr.t("_create_venv_thread.s10_5ddfc9", "Creating virtual environment..."))
 
         # Debian/Ubuntu 可能缺少 python3-venv，先尝试安装
         if sys.platform != "win32" and not self._venv_module_ok():
             if self._is_debian_like():
-                self.statusChanged.emit("检测到 Debian/Ubuntu，缺少 python3-venv 包")
+                self.statusChanged.emit(Tr.t("_create_venv_thread.s11_3679b6", "Debian/Ubuntu detected, missing python3-venv"))
                 if not self._install_system_venv():
                     self.finished.emit(
                         False,
@@ -160,13 +161,13 @@ class EnvManager(QObject):
                 if not self._venv_module_ok():
                     self.finished.emit(
                         False,
-                        "python3-venv 已安装但 venv 模块仍不可用，请检查 Python 版本。",
+                        Tr.t("_create_venv_thread.s13_da9af0", "python3-venv installed but venv module not available."),
                     )
                     return
             else:
                 self.finished.emit(
                     False,
-                    "缺少 venv 模块，请安装对应发行版的 python3-venv 包后重试。",
+                    Tr.t("_create_venv_thread.s14_bf622b", "venv module missing. Install python3-venv for your distro."),
                 )
                 return
 
@@ -179,8 +180,8 @@ class EnvManager(QObject):
                 cmd,
                 check=True, capture_output=True, timeout=60
             )
-            self.statusChanged.emit("虚拟环境创建成功")
-            self.finished.emit(True, "venv 创建完成")
+            self.statusChanged.emit(Tr.t("_create_venv_thread.s15_74ea2c", "Virtual environment created successfully"))
+            self.finished.emit(True, Tr.t("_create_venv_thread.s16_7f9568", "Venv creation complete"))
         except subprocess.CalledProcessError as e:
             hint = ""
             if sys.platform != "win32" and self._is_debian_like():
@@ -200,9 +201,9 @@ class EnvManager(QObject):
 
     # ── 国内镜像源（按优先级排列）──
     _MIRRORS = [
-        ("默认源", []),
-        ("清华镜像", ["-i", "https://pypi.tuna.tsinghua.edu.cn/simple"]),
-        ("阿里镜像", ["-i", "https://mirrors.aliyun.com/pypi/simple"]),
+        (Tr.t("install_pyside6.s18_2f422a", "Default source"), []),
+        (Tr.t("install_pyside6.s19_df4e3a", "Tsinghua mirror"), ["-i", "https://pypi.tuna.tsinghua.edu.cn/simple"]),
+        (Tr.t("install_pyside6.s20_5ebad9", "Alibaba mirror"), ["-i", "https://mirrors.aliyun.com/pypi/simple"]),
     ]
 
     @staticmethod
@@ -247,7 +248,7 @@ class EnvManager(QObject):
             self.statusChanged.emit(f"pip 错误: {err[-500:]}")  # 最后 500 字符
             return False
         except subprocess.TimeoutExpired:
-            self.statusChanged.emit("pip 安装超时")
+            self.statusChanged.emit(Tr.t("_pip_install.s24_c17d79", "pip install timeout"))
             return False
         except Exception as e:
             self.statusChanged.emit(f"pip 异常: {e}")
@@ -255,10 +256,10 @@ class EnvManager(QObject):
 
     def _install_pyside6_thread(self):
         if not self.venv_exists:
-            self.finished.emit(False, "请先创建虚拟环境")
+            self.finished.emit(False, Tr.t("_on_install_pyside6.s48_293fcc", "Please create venv first"))
             return
 
-        self.statusChanged.emit("正在安装 PySide6 (可能需要几分钟)...")
+        self.statusChanged.emit(Tr.t("_install_pyside6_thread.s26_104498", "Installing PySide6 (may take a few minutes)..."))
 
         # ---- 诊断输出（显示在 UI 日志） ----
         self.statusChanged.emit(
@@ -280,9 +281,9 @@ class EnvManager(QObject):
         # ---------------------------------
 
         # 1. 升级 pip
-        self.statusChanged.emit("升级 pip ...")
+        self.statusChanged.emit(Tr.t("_install_pyside6_thread.s27_18474a", "Upgrading pip..."))
         if not self._pip_install(["--upgrade", "pip"], timeout=30):
-            self.statusChanged.emit("pip 升级失败，尝试继续安装 PySide6 ...")
+            self.statusChanged.emit(Tr.t("_install_pyside6_thread.s28_f056a6", "pip upgrade failed, trying PySide6 install anyway..."))
 
         # 2. 优先使用脱机 wheel 安装（任何平台，只要找到离线包）
         wheels = self._offline_wheels_dir
@@ -292,12 +293,12 @@ class EnvManager(QObject):
                 ["--no-index", f"--find-links={wheels}", "PySide6>=6.5"],
                 timeout=120
             ):
-                self.statusChanged.emit("PySide6 脱机安装成功")
-                self.finished.emit(True, "PySide6 安装完成（脱机）")
+                self.statusChanged.emit(Tr.t("_install_pyside6_thread.s29_b94602", "PySide6 offline install successful"))
+                self.finished.emit(True, Tr.t("_install_pyside6_thread.s30_5b528a", "PySide6 install complete (offline)"))
                 return
-            self.statusChanged.emit("脱机安装失败，回退到在线安装...")
+            self.statusChanged.emit(Tr.t("_install_pyside6_thread.s31_082542", "Offline install failed, trying online..."))
         else:
-            self.statusChanged.emit("未找到 offline_wheels/ 目录，使用在线安装...")
+            self.statusChanged.emit(Tr.t("_install_pyside6_thread.s32_f4d327", "offline_wheels/ not found, using online install..."))
 
         # 3. 在线安装 PySide6（重试 + 镜像回退）
         for mirror_name, mirror_args in self._MIRRORS:
@@ -305,8 +306,8 @@ class EnvManager(QObject):
                 tag = f"{mirror_name} (第 {attempt} 次)"
                 self.statusChanged.emit(f"安装 PySide6 — {tag}")
                 if self._pip_install(mirror_args + ["PySide6>=6.5"], timeout=300):
-                    self.statusChanged.emit("PySide6 安装成功")
-                    self.finished.emit(True, "PySide6 安装完成")
+                    self.statusChanged.emit(Tr.t("_install_pyside6_thread.s33_982142", "PySide6 install successful"))
+                    self.finished.emit(True, Tr.t("_install_pyside6_thread.s34_574440", "PySide6 install complete"))
                     return
                 if attempt < 3:
                     self.statusChanged.emit(f"{tag} 失败，5 秒后重试...")
@@ -335,5 +336,5 @@ class EnvManager(QObject):
                 "\n\n如果是 Debian/Ubuntu，可能缺少系统依赖：\n"
                 "  sudo apt-get install -y libxcb-cursor0 libegl1 libgl1"
             )
-        self.statusChanged.emit("PySide6 安装失败")
+        self.statusChanged.emit(Tr.t("_install_pyside6_thread.s41_3421ca", "PySide6 install failed"))
         self.finished.emit(False, hint)

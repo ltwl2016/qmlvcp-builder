@@ -1,3 +1,4 @@
+from lang import Tr
 # QmlVcp Builder - CNC HMI Visual Construction Toolkit
 # Copyright (C) 2026 ltwl2016
 #
@@ -161,7 +162,7 @@ class PropertiesMixin:
 
         self._prop_type.currentTextChanged.connect(self._on_prop_type_changed)
 
-        self._props_form.addRow("类型:", self._prop_type)
+        self._props_form.addRow(Tr.t("_prop_type.s2_436358", "Type:"), self._prop_type)
 
 
 
@@ -169,7 +170,7 @@ class PropertiesMixin:
 
         self._prop_id = QLineEdit()
 
-        self._prop_id.setPlaceholderText("QML 标识符 (可选)")
+        self._prop_id.setPlaceholderText(Tr.t("_prop_id.s3_2f2da9", "QML identifier (optional)"))
 
         self._prop_id.textChanged.connect(self._on_prop_changed)
 
@@ -225,7 +226,7 @@ class PropertiesMixin:
 
         w_row.addWidget(self._chk_right_w)
 
-        self._props_form.addRow("宽:", w_row)
+        self._props_form.addRow(Tr.t("_chk_right_w.s6_2589e7", "Width:"), w_row)
 
 
 
@@ -253,7 +254,7 @@ class PropertiesMixin:
 
         h_row.addWidget(self._chk_bottom_h)
 
-        self._props_form.addRow("高:", h_row)
+        self._props_form.addRow(Tr.t("_chk_bottom_h.s9_8084a2", "Height:"), h_row)
 
 
 
@@ -277,7 +278,7 @@ class PropertiesMixin:
 
         src_row.addWidget(self._btn_browse_src)
 
-        self._props_form.addRow("贴图:", src_row)
+        self._props_form.addRow(Tr.t("_btn_browse_src.s10_cd9887", "Image:"), src_row)
 
 
 
@@ -295,9 +296,9 @@ class PropertiesMixin:
 
         _setup_combo_search(self._prop_action)
 
-        self._props_form.addRow("动作:", self._prop_action)
+        self._props_form.addRow(Tr.t("_prop_action.s11_3cf4dc", "Action:"), self._prop_action)
 
-        self._prop_action.setToolTip("输入关键词筛选：home、jog、spindle…")
+        self._prop_action.setToolTip(Tr.t("_prop_action.s12_7b14d2", "Filter: home, jog, spindle…"))
 
 
 
@@ -315,9 +316,9 @@ class PropertiesMixin:
 
         _setup_combo_search(self._prop_bind)
 
-        self._props_form.addRow("绑定:", self._prop_bind)
+        self._props_form.addRow(Tr.t("_prop_bind.s13_df01b3", "Bind:"), self._prop_bind)
 
-        self._prop_bind.setToolTip("输入关键词筛选：spindle、mode、homed…")
+        self._prop_bind.setToolTip(Tr.t("_prop_bind.s14_5cf817", "Filter: spindle, mode, homed…"))
 
 
 
@@ -411,7 +412,7 @@ class PropertiesMixin:
 
         self._prop_pressed_src = QLineEdit()
 
-        self._prop_pressed_src.setPlaceholderText("按下状态贴图（可选）")
+        self._prop_pressed_src.setPlaceholderText(Tr.t("_prop_pressed_src.s15_3f9046", "Pressed-state image (optional)"))
 
         self._prop_pressed_src.textChanged.connect(self._on_prop_changed)
 
@@ -427,7 +428,7 @@ class PropertiesMixin:
 
         psrc_row.addWidget(self._btn_browse_psrc)
 
-        self._props_form.addRow("备用贴图:", psrc_row)
+        self._props_form.addRow(Tr.t("_btn_browse_psrc.s16_dc4685", "Alt image:"), psrc_row)
 
 
 
@@ -435,7 +436,7 @@ class PropertiesMixin:
 
         self._prop_active_line_bind = QLineEdit()
 
-        self._prop_active_line_bind.setPlaceholderText("例: status.lineNumber")
+        self._prop_active_line_bind.setPlaceholderText(Tr.t("_prop_active_line_bind.s17_c198bc", "e.g. status.lineNumber"))
 
         self._prop_active_line_bind.textChanged.connect(self._on_prop_changed)
 
@@ -445,7 +446,7 @@ class PropertiesMixin:
 
         self._prop_allow_sel_bind = QLineEdit()
 
-        self._prop_allow_sel_bind.setPlaceholderText("例: backend.isIdle")
+        self._prop_allow_sel_bind.setPlaceholderText(Tr.t("_prop_allow_sel_bind.s19_01eb43", "e.g. backend.isIdle"))
 
         self._prop_allow_sel_bind.textChanged.connect(self._on_prop_changed)
 
@@ -455,7 +456,7 @@ class PropertiesMixin:
 
         self._prop_active_bind = QLineEdit()
 
-        self._prop_active_bind.setPlaceholderText("例: status.isAllHomed")
+        self._prop_active_bind.setPlaceholderText(Tr.t("_prop_active_bind.s21_c72839", "e.g. status.isAllHomed"))
 
         self._prop_active_bind.textChanged.connect(self._on_prop_changed)
 
@@ -465,7 +466,7 @@ class PropertiesMixin:
 
         self._prop_value_bind = QLineEdit()
 
-        self._prop_value_bind.setPlaceholderText("例: status.spindleSpeed")
+        self._prop_value_bind.setPlaceholderText(Tr.t("_prop_value_bind.s23_de0d25", "e.g. status.spindleSpeed"))
 
         self._prop_value_bind.textChanged.connect(self._on_prop_changed)
 
@@ -475,7 +476,7 @@ class PropertiesMixin:
 
         self._prop_source_clip_bind = QLineEdit()
 
-        self._prop_source_clip_bind.setPlaceholderText("例: backend.isMachineCoordActive ? Qt.rect(118,0,118,15) : Qt.rect(0,0,118,15)")
+        self._prop_source_clip_bind.setPlaceholderText(Tr.t("_prop_source_clip_bind.s25_232aa0", "e.g. backend.isMachineCoordActive ? Qt.rect(118,0,118,15) : Qt.rect(0,0,118,15)"))
 
         self._prop_source_clip_bind.textChanged.connect(self._on_prop_changed)
 
@@ -487,7 +488,7 @@ class PropertiesMixin:
 
         self._prop_sprite_frame = QLineEdit()
 
-        self._prop_sprite_frame.setPlaceholderText("例: status.homedX ? 0 : 1")
+        self._prop_sprite_frame.setPlaceholderText(Tr.t("controls.s105_d516f4", "e.g. status.homedX ? 0 : 1"))
 
         self._prop_sprite_frame.textChanged.connect(self._on_prop_changed)
 
@@ -499,17 +500,17 @@ class PropertiesMixin:
 
         self._btn_gen_sprite.setFixedWidth(32)
 
-        self._btn_gen_sprite.setToolTip("用当前 half 和 bind 值生成表达式")
+        self._btn_gen_sprite.setToolTip(Tr.t("_btn_gen_sprite.s28_fab7bf", "Generate expression from current half and bind values"))
 
         self._btn_gen_sprite.clicked.connect(self._gen_sprite_frame_expr)
 
         sframe_row.addWidget(self._btn_gen_sprite)
 
-        self._props_form.addRow("精灵帧:", sframe_row)
+        self._props_form.addRow(Tr.t("_btn_gen_sprite.s29_514f17", "Sprite frame:"), sframe_row)
 
         self._prop_sprite_frame_bind = QLineEdit()
 
-        self._prop_sprite_frame_bind.setPlaceholderText("表达式优先 (如 status.homedX ? 1 : 0)")
+        self._prop_sprite_frame_bind.setPlaceholderText(Tr.t("_prop_sprite_frame_bind.s30_35a9da", "Expression takes priority (e.g. status.homedX ? 1 : 0)"))
 
         self._prop_sprite_frame_bind.textChanged.connect(self._on_prop_changed)
 
@@ -648,7 +649,7 @@ class PropertiesMixin:
 
         path, _ = QFileDialog.getOpenFileName(
 
-            self, "选择控件贴图", "",
+            self, Tr.t("_pick_image_for_control.s32_0994e6", "Select control image"), "",
 
             "Images (*.png *.jpg *.jpeg)"
 
@@ -1307,7 +1308,7 @@ class PropertiesMixin:
 
         path, _ = QFileDialog.getOpenFileName(
 
-            self, "选择按下状态贴图", "",
+            self, Tr.t("_browse_pressed_src.s41_d35e51", "Select pressed-state image"), "",
 
             "Images (*.png *.jpg *.jpeg *.bmp *.gif)"
 
@@ -1326,7 +1327,7 @@ class PropertiesMixin:
 
         path, _ = QFileDialog.getOpenFileName(
 
-            self, "选择贴图", "",
+            self, Tr.t("_browse_src.s43_8d5c1c", "Select image"), "",
 
             "Images (*.png *.jpg *.jpeg *.bmp *.gif)"
 

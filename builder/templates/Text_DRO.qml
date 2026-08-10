@@ -6,4 +6,5 @@ Text {
     horizontalAlignment: Text.AlignRight
     font.pixelSize: $fontSize
     color: "$color"
+    $extraQml
 }

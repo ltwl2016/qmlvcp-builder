@@ -4,4 +4,5 @@ MachLED {
     source: assetsDir + "/assets/$src"
     active: $bind
     isHorizontal: $isHorizontal
+    $extraQml
 }

@@ -4,15 +4,17 @@ Rectangle {
     width: $w
     height: $h
     color: "transparent"
-    border.color: "white"
+    border.color: "black"
     border.width: 2
-    clip: true
+    
     TextField {
         anchors.fill: parent
         anchors.margins: 2
-        background: Item {}
-        placeholderText: "输入命令...."
+        placeholderText: "输入 MDI 指令，按 Enter 执行..."
         font.pixelSize: $fontSize
+        color: "#222"
+        background: Item {}
+        verticalAlignment: Text.AlignVCenter
         onAccepted: {
             var cmd = text.trim()
             if (cmd !== "") {

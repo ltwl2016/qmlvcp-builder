@@ -21,6 +21,7 @@
 
 from builder.controls import FIELD_KINDS, get_properties, PROP_BINDABLE as _PROP_BINDABLE
 import re
+from lang import Tr
 
 
 def parse_template(template: str) -> list:
@@ -73,7 +74,7 @@ def _widget_factories():
             self.btn.clicked.connect(self._browse)
             lay.addWidget(self.btn)
         def _browse(self):
-            f, _ = QFileDialog.getOpenFileName(self, "选择文件", "",
+            f, _ = QFileDialog.getOpenFileName(self, Tr.t("_browse.s4_fd7e0c", "Browse files"), "",
                 "Images (*.png *.jpg *.bmp *.gif *.svg)")
             if f: self.edit.setText(f)
         def text(self): return self.edit.text()
@@ -90,18 +91,18 @@ def _widget_factories():
             lay = QVBoxLayout(self)
             lay.setContentsMargins(0, 0, 0, 0)
             lay.setSpacing(2)
-            self.btn = QPushButton("▶ 手写备用属性")
+            self.btn = QPushButton(Tr.t("btn.s6_87cefd", "▶ Custom properties"))
             self.btn.clicked.connect(self._toggle)
             lay.addWidget(self.btn)
             self.edit = QPlainTextEdit()
-            self.edit.setPlaceholderText("在此输入自定义 QML 属性...")
+            self.edit.setPlaceholderText(Tr.t("edit.s7_9706ce", "Enter custom QML properties here..."))
             self.edit.setMaximumHeight(100)
             self.edit.setVisible(False)
             lay.addWidget(self.edit)
         def _toggle(self):
             self._collapsed = not self._collapsed
             self.edit.setVisible(not self._collapsed)
-            self.btn.setText("▼ 手写备用属性" if not self._collapsed else "▶ 手写备用属性")
+            self.btn.setText(Tr.t("_collapsed.s8_5a7288", "▼ Custom properties") if not self._collapsed else Tr.t("btn.s6_87cefd", "▶ Custom properties"))
         def text(self): return self.edit.toPlainText()
         def setText(self, v): self.edit.setPlainText(v if v else "")
         def blockSignals(self, b): self.edit.blockSignals(b)
@@ -115,7 +116,7 @@ def _widget_factories():
             self._color = "#000000"
             self.clicked.connect(self._pick)
         def _pick(self):
-            c = QColorDialog.getColor(QColor(self._color), self, "选择颜色")
+            c = QColorDialog.getColor(QColor(self._color), self, Tr.t("_pick.s11_0ace70", "Pick color"))
             if c.isValid():
                 self._color = c.name()
                 self.setStyleSheet(f"background:{self._color};")
@@ -147,6 +148,7 @@ def _widget_factories():
         elif kind == "jog_action_combo":
             w = QComboBox()
             w.setEditable(True)
+            w.setMaximumWidth(260)
             w.addItems(["", "--- JOG ---",
                 "JOG_X+", "JOG_X-", "JOG_Y+", "JOG_Y-",
                 "JOG_Z+", "JOG_Z-", "JOG_A+", "JOG_A-",
@@ -160,6 +162,7 @@ def _widget_factories():
         elif kind == "action_combo":
             w = QComboBox()
             w.setEditable(True)
+            w.setMaximumWidth(260)
             w.addItems(["","cmd.homeAll","cmd.modeManual","cmd.modeAuto",
                         "cmd.spindleOn","cmd.spindleOff","cmd.emergencyStop",
                         "cmd.toolTable","cmd.programRun","cmd.programPause",
@@ -171,6 +174,7 @@ def _widget_factories():
         elif kind == "bind_combo":
             w = QComboBox()
             w.setEditable(True)
+            w.setMaximumWidth(260)
             w.addItems(["",
                 "backend.displayToolX","backend.displayToolY","backend.displayToolZ",
                 "backend.displayToolA","backend.displayToolB","backend.displayToolC",
@@ -187,11 +191,13 @@ def _widget_factories():
         elif kind == "bool_expr":
             w = QComboBox()
             w.setEditable(True)
-            w.addItems(["true", "false"])
+            w.addItems(opts.get("options", ["true", "false"]))
+            w.setMaximumWidth(260)
             _setup_search(w)
             return w
         elif kind == "int":
             w = QSpinBox()
+            w.setMaximumWidth(100)
             w.setRange(rng[0], rng[1])
             return w
         elif kind == "float":

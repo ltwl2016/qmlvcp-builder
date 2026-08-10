@@ -27,6 +27,7 @@
 
 import os
 from backend_actions_binds import get_actions, get_binds, get_all_actions, get_all_binds
+from lang import Tr
 
 CONTROLS = []
 from builder.templates import CONTROLS as _cts
@@ -41,114 +42,119 @@ CONTROLS = _cts
 # ═══════════════════════════════════════════════════════════
 # 格式: { name: (label, kind, default, tooltip, options) }
 FIELD_KINDS = {
-    "id":              ("标识符",     "text",          "",     "QML id (同文件内其他控件可通过此 id 引用)", {}),
-    "title":           ("标题",       "text",          "",     "对话框标题", {}),
-    "src":             ("贴图",       "path",          "",     "贴图文件路径 (assets/xxx.png)", {}),
-    "pressedSource":   ("备用贴图",   "path",          "",     "按下状态时显示的贴图（可选，留空则同 src）", {"optional": True}),
-    "pressedSrc":      ("备用贴图",   "path",          "",     "按下状态时显示的贴图", {"optional": True}),
-    "bg":              ("背景",       "path",          "",     "背景贴图路径", {}),
-    "bgW":             ("背景宽",     "int",           0,      "背景贴图渲染宽度 (0=跟随页面宽度)", {"range": (0, 4096)}),
-    "bgH":             ("背景高",     "int",           0,      "背景贴图渲染高度 (0=跟随页面高度)", {"range": (0, 4096)}),
-    "action":          ("动作",       "action_combo",  "",     "点击触发的动作 (onClicked / onLineSelected)", {}),
-    "action_press":    ("按下",       "jog_action_combo", "",     "按下时执行的 JOG 动作", {}),
-    "action_release":  ("抬起",       "jog_action_combo", "",     "抬起时执行的 JOG 动作", {}),
-    "bind":            ("绑定",       "bind_combo",    "",     "绑定到状态变量 (status.xxx / backend.xxx)", {}),
-    "enabled":         ("允许条件:",  "bool_expr",     True,   "true/false 或绑定表达式 (如 backend.machineOn)", {}),
-    "active":          ("亮灭",       "bool",          False,  "LED 亮/灭状态", {}),
-    "isSprite":        ("精灵图",     "bool",          False,  "是否为精灵图控件", {}),
-    "isHorizontal":    ("水平布局",   "bool",          True,   "精灵图排列方向：开=横向，关=纵向", {}),
-    "isToggle":        ("切换模式",   "bool",          False,  "切换开关模式 (按下锁定/松开弹起)", {}),
-    "repeat":          ("循环",       "bool",          False,  "是否循环触发", {}),
-    "running":         ("运行",       "bool",          True,   "是否启动定时器", {}),
-    "container":       ("容器",       "bool",          False,  "作为子控件容器（子控件相对定位）", {}),
-    "border":          ("边框",       "bool",          False,  "是否显示边框", {}),
-    "allowSelection":  ("允许选择",   "bool",          True,   "GCodeViewer 是否允许手动点选行", {}),
-    "showWorkAxes":    ("显示工件轴", "bool",          False,  "GCodeGraphics 是否显示工件坐标轴", {}),
-    "isOrthographic":  ("正交",       "bool",          True,   "GCodeGraphics 正交/透视视图", {}),
-    "fontSize":        ("字号",       "int",           16,     "字体大小（像素）", {"range": (1, 200)}),
-    "decimals":        ("小数位",     "int",           4,      "小数位数", {"range": (0, 10)}),
-    "activeLine":      ("高亮行",     "int",           -1,     "GCodeViewer 当前执行行号高亮", {"range": (-1, 999999)}),
-    "interval":        ("间隔(ms)",   "int",           1000,   "定时器触发间隔（毫秒）", {"range": (1, 999999)}),
-    "borderThickness": ("边框厚度",   "int",           2,      "按钮内芯裁切边框厚度（像素）", {"range": (0, 20)}),
-    "shrinkAmount":    ("下陷像素",   "int",           2,      "按下时内芯塌陷像素", {"range": (0, 20)}),
-    "borderW":         ("边框宽",     "int",           1,      "边框宽度（像素）", {"range": (0, 20)}),
-    "z":               ("z层级",      "int",           0,      "控件 z 层级", {"range": (0, 999)}),
-    "opacity":         ("透明度",     "int",           100,    "透明度 (10-100%)", {"range": (10, 100)}),
-    "cameraZoom":      ("缩放",       "float",         5.0,    "GCodeGraphics 正交相机缩放倍率", {"range": (0.1, 10.0)}),
-    "value":           ("值",         "float",         0,      "当前值", {"range": (-9999, 99999)}),
-    "from":            ("最小值",     "float",         0,      "滑动条最小值", {"range": (-9999, 99999)}),
-    "to":              ("最大值",     "float",         200,    "滑动条最大值", {"range": (-9999, 99999)}),
-    "color":           ("文字色",     "color",         "#ffffff", "文字颜色 (Hex 色值)", {}),
-    "textColor":       ("文字色",     "color",         "#ffffff", "文字颜色", {}),
-    "bgColor":         ("背景色",     "color",         "#1e1e1e", "背景填充色 (Hex 色值)", {}),
-    "accentColor":     ("主题色",     "color",         "#3388ff", "主题强调色", {}),
-    "activeColor":     ("激活色",     "color",         "#00ff00", "激活/点亮时的颜色", {}),
-    "inactiveColor":   ("未激活色",   "color",         "#555555", "未激活/熄灭时的颜色", {}),
-    "defaultColor":    ("默认色",     "color",         "#0088ff", "HalButton 默认背景色", {}),
-    "pressedColor":    ("按下色",     "color",         "#00ffff", "按下时的颜色", {}),
-    "highlightColor":  ("高亮色",     "color",         "#00cc00", "高亮/主题强调色", {}),
-    "borderC":         ("边框色",     "color",         "#555555", "边框颜色 (Hex 色值)", {}),
-    "text":            ("文字",       "text",          "",     "显示的文本内容", {}),
-    "label":           ("标签",       "text",          "",     "标签文字 (HalSlider 标题)", {}),
-    "unit":            ("单位",       "text",          "",     "数值单位 (mm / % / rpm 等)", {}),
-    "pinName":         ("引脚",       "text",          "",     "HAL 硬件引脚名称", {}),
-    "spriteFrame":     ("精灵帧",     "expression",    "",     "精灵图当前帧，支持表达式", {"placeholder": "例: status.homedX ? 0 : 1"}),
-    "sourceClipRect":  ("裁剪区域",   "expression",    "",     "图片裁剪区域，例: Qt.rect(0,0,16,26)", {"placeholder": "例: Qt.rect(0,0,16,26)"}),
-    "half":            ("帧方向",     "half",          "none", "精灵图方向：左=第0帧，右=第1帧", {}),
-    "spriteOrientation":("精灵图方向","int",           0,      "", {"range": (0, 3)}),
-    "machineName":     ("机床名",     "text",          "",     "机床名称显示", {}),
-    "maxVelocity":     ("最大速度",   "float",         3000,   "", {"range": (0, 99999)}),
-    "primaryColor":    ("主色",       "color",         "#2196F3", "", {}),
-    "extraQml":        ("手写备用属性", "extra_qml",      "",     "展开后手写 QML 属性，将插入到控件定义末尾", {}),
+    "id":              (Tr.t("controls.s1_f3c00c", "Identifier"),     "text",          "",     Tr.t("controls.s2_ee5078", "QML id (referenced by other controls)"), {}),
+    "title":           (Tr.t("controls.s3_32c65d", "Title"),       "text",          "",     Tr.t("controls.s4_6f4ced", "Dialog title"), {}),
+    "src":             (Tr.t("controls.s5_75432c", "Sprite"),       "path",          "",     Tr.t("controls.s6_f1f0fb", "Sprite file path (assets/xxx.png)"), {}),
+    "pressedSource":   (Tr.t("controls.s9_15764f", "Alt Sprite"),   "path",          "",     Tr.t("controls.s8_64c7d7", "Sprite for pressed state (optional, leave blank to use src)"), {"optional": True}),
+    "pressedSrc":      (Tr.t("controls.s9_15764f", "Alt Sprite"),   "path",          "",     Tr.t("controls.s10_c906e2", "Pressed-state image"), {"optional": True}),
+    "bg":              (Tr.t("controls.s11_8e1b94", "Background"),       "path",          "",     Tr.t("controls.s12_bb52ec", "Background image path"), {}),
+    "bgW":             (Tr.t("controls.s13_95dd65", "Background width"),     "int",           0,      Tr.t("controls.s14_ac82ed", "Render width (0=follow page width)"), {"range": (0, 4096)}),
+    "bgH":             (Tr.t("controls.s15_5a9586", "Background height"),     "int",           0,      Tr.t("controls.s16_e5a633", "Render height (0=follow page height)"), {"range": (0, 4096)}),
+    "action":          (Tr.t("controls.s17_c500cf", "Action"),       "action_combo",  "",     Tr.t("controls.s18_7456d5", "Action on click (onClicked / onLineSelected)"), {}),
+    "action_press":    (Tr.t("controls.s19_70cf0a", "Press"),       "jog_action_combo", "",     Tr.t("controls.s20_4eb283", "JOG action on press"), {}),
+    "action_release":  (Tr.t("controls.s21_daa3ce", "Release"),       "jog_action_combo", "",     Tr.t("controls.s22_c2050e", "JOG action on release"), {}),
+    "bind":            (Tr.t("controls.s23_f4f12c", "Bind"),       "bind_combo",    "",     Tr.t("controls.s24_0000e7", "Bind to state variable (status.xxx / backend.xxx)"), {}),
+    "enabled":         (Tr.t("controls.s25_56a30e", "Allow condition:"),  "bool_expr",     True,   Tr.t("controls.s26_d8aab0", "true/false or bind expr (e.g. backend.machineOn)"),
+                        {"options": [
+                        "true", "false",
+                        """!(backend.machineMode === "自动" && !backend.interpIdle)""",
+                        "backend.machineOn",
+                        ]}),
+    "active":          (Tr.t("controls.s27_90f89a", "On/Off"),       "bool",          False,  Tr.t("controls.s28_c5b0f8", "LED on/off state"), {}),
+    "isSprite":        (Tr.t("controls.s29_5b60ad", "Sprite"),     "bool",          False,  Tr.t("controls.s30_e13ae0", "Sprite-based control"), {}),
+    "isHorizontal":    (Tr.t("controls.s31_db572d", "Horizontal layout"),   "bool",          True,   Tr.t("controls.s32_59e3f5", "Sprite layout: on=horizontal, off=vertical"), {}),
+    "isToggle":        (Tr.t("controls.s33_4417d2", "Toggle mode"),   "bool",          False,  Tr.t("controls.s34_53b6a2", "Toggle switch (press=latched / release=unlatched)"), {}),
+    "repeat":          (Tr.t("controls.s35_69bdc6", "Loop"),       "bool",          False,  Tr.t("controls.s36_b69760", "Whether to loop trigger"), {}),
+    "running":         (Tr.t("controls.s37_4c763b", "Run"),       "bool",          True,   Tr.t("controls.s38_eaf2d6", "Whether to start the timer"), {}),
+    "container":       (Tr.t("controls.s39_22c799", "Container"),       "bool",          False,  Tr.t("controls.s40_7e20fe", "Child control container (relative positioning)"), {}),
+    "border":          (Tr.t("controls.s41_961534", "Border"),       "bool",          False,  Tr.t("controls.s42_739282", "Whether to show border"), {}),
+    "allowSelection":  (Tr.t("controls.s43_674dbd", "Allow selection"),   "bool",          True,   Tr.t("controls.s44_a69824", "GCodeViewer manual line selection"), {}),
+    "showWorkAxes":    (Tr.t("controls.s45_98cba5", "Show work axis"), "bool",          False,  Tr.t("controls.s46_6090b3", "GCodeGraphics show workpiece axes"), {}),
+    "isOrthographic":  (Tr.t("controls.s47_90674d", "Ortho"),       "bool",          True,   Tr.t("controls.s48_6b4f05", "GCodeGraphics ortho/perspective view"), {}),
+    "fontSize":        (Tr.t("controls.s49_fc55af", "Font size"),       "int",           16,     Tr.t("controls.s50_1b03d0", "Font size (pixels)"), {"range": (1, 200)}),
+    "decimals":        (Tr.t("controls.s51_0378d9", "Precision"),     "int",           4,      Tr.t("controls.s52_e284e6", "Decimal places"), {"range": (0, 10)}),
+    "activeLine":      (Tr.t("controls.s53_fcb663", "Highlight line"),     "int",           -1,     Tr.t("controls.s54_480744", "GCodeViewer active line highlight"), {"range": (-1, 999999)}),
+    "interval":        (Tr.t("controls.s55_579052", "Interval (ms)"),   "int",           1000,   Tr.t("controls.s56_1d4dab", "Timer trigger interval (ms)"), {"range": (1, 999999)}),
+    "borderThickness": (Tr.t("controls.s57_ae1776", "Border thickness"),   "int",           2,      Tr.t("controls.s58_9a4b54", "Button inner border thickness (pixels)"), {"range": (0, 20)}),
+    "shrinkAmount":    (Tr.t("controls.s59_4e98d1", "Sunken Pixels"),   "int",           2,      Tr.t("controls.s60_862f24", "Pressed core collapse pixels"), {"range": (0, 20)}),
+    "borderW":         (Tr.t("controls.s61_61bf5b", "Border Width"),     "int",           1,      Tr.t("controls.s62_605c53", "Border width (pixels)"), {"range": (0, 20)}),
+    "z":               (Tr.t("controls.s63_4af0aa", "Z Level"),      "int",           0,      Tr.t("controls.s64_3eb6ad", "Control z-order level"), {"range": (0, 999)}),
+    "opacity":         (Tr.t("controls.s65_34dac4", "Opacity"),     "int",           100,    Tr.t("controls.s66_8ad257", "Opacity (10-100%)"), {"range": (10, 100)}),
+    "cameraZoom":      (Tr.t("controls.s67_05853d", "Zoom"),       "float",         5.0,    Tr.t("controls.s68_afb166", "GCodeGraphics orthographic camera zoom ratio"), {"range": (0.1, 10.0)}),
+    "value":           ("值",         "float",         0,      Tr.t("controls.s70_e52c27", "Current value"), {"range": (-9999, 99999)}),
+    "from":            (Tr.t("controls.s71_c322ed", "Min"),     "float",         0,      Tr.t("controls.s72_769d19", "Slider minimum value"), {"range": (-9999, 99999)}),
+    "to":              (Tr.t("controls.s73_5da893", "Max"),     "float",         200,    Tr.t("controls.s74_7bed8c", "Slider maximum value"), {"range": (-9999, 99999)}),
+    "color":           (Tr.t("controls.s77_94e49c", "Text Color"),     "color",         "#ffffff", Tr.t("controls.s76_f682db", "Text color (Hex color value)"), {}),
+    "textColor":       (Tr.t("controls.s77_94e49c", "Text Color"),     "color",         "#ffffff", Tr.t("controls.s78_7ec907", "Text color"), {}),
+    "bgColor":         (Tr.t("controls.s79_2f97db", "Background Color"),     "color",         "transparent", Tr.t("controls.s80_308179", "Background fill color (Hex color value)"), {}),
+    "accentColor":     (Tr.t("controls.s81_b47707", "Theme Color"),     "color",         "#3388ff", Tr.t("controls.s82_206c42", "Theme accent color"), {}),
+    "activeColor":     (Tr.t("controls.s83_df85ba", "Active Color"),     "color",         "#00ff00", Tr.t("controls.s84_a7c732", "Active/highlighted color"), {}),
+    "inactiveColor":   (Tr.t("controls.s85_d088bc", "Inactive Color"),   "color",         "#555555", Tr.t("controls.s86_caa2f1", "Inactive/off color"), {}),
+    "defaultColor":    (Tr.t("controls.s87_d65d5b", "Default Color"),     "color",         "#0088ff", Tr.t("controls.s88_110cad", "HalButton default background color"), {}),
+    "pressedColor":    (Tr.t("controls.s89_da7910", "Pressed Color"),     "color",         "#00ffff", Tr.t("controls.s90_98c5bd", "Pressed state color"), {}),
+    "highlightColor":  (Tr.t("controls.s91_900697", "Highlight Color"),     "color",         "#00cc00", Tr.t("controls.s92_c0a125", "Highlight/theme accent color"), {}),
+    "borderC":         (Tr.t("controls.s93_b5c63e", "Border Color"),     "color",         "#555555", Tr.t("controls.s94_b74b89", "Border color (Hex color value)"), {}),
+    "text":            (Tr.t("controls.s95_ca746b", "Text"),       "text",          "",     Tr.t("controls.s96_a2f537", "Displayed text content"), {}),
+    "label":           (Tr.t("controls.s97_14d342", "Label"),       "text",          "",     Tr.t("controls.s98_52f8ff", "Label text (HalSlider title)"), {}),
+    "unit":            (Tr.t("controls.s99_f29968", "Unit"),       "text",          "",     Tr.t("controls.s163_6c924a", "Unit (mm/ %/ rpm)"), {}),
+    "pinName":         (Tr.t("controls.s101_be46a7", "Pin"),       "text",          "",     Tr.t("controls.s150_1db13e", "HAL pin name"), {}),
+    "spriteFrame":     (Tr.t("controls.s103_84e5df", "Sprite frame"),     "expression",    "",     Tr.t("controls.s104_a151eb", "Current sprite frame expression"), {"placeholder": Tr.t("controls.s105_d516f4", "e.g. status.homedX ? 0 : 1")}),
+    "sourceClipRect":  (Tr.t("controls.s106_f785a3", "Clip region"),   "expression",    "",     Tr.t("controls.s107_ae3efd", "Image clip region Qt.rect(...)"), {"placeholder": Tr.t("controls.s108_571964", "e.g. Qt.rect(0,0,16,26)")}),
+    "half":            (Tr.t("controls.s109_10455a", "Frame direction"),     "half",          "none", Tr.t("controls.s131_17d306", "Direction: Left=0, Right=1"), {}),
+    "spriteOrientation":(Tr.t("controls.s111_6c1b9b", "Sprite direction"),"int",           0,      "", {"range": (0, 3)}),
+    "machineName":     (Tr.t("controls.s112_9ea6a0", "Machine name"),     "text",          "",     Tr.t("controls.s113_c42dc4", "Machine name display"), {}),
+    "maxVelocity":     (Tr.t("controls.s114_15c184", "Max speed"),   "float",         3000,   "", {"range": (0, 99999)}),
+    "primaryColor":    (Tr.t("controls.s115_fbae87", "Main color"),       "color",         "#2196F3", "", {}),
+    "extraQml":        (Tr.t("controls.s116_a04024", "Custom properties"), "extra_qml",      "",     Tr.t("controls.s117_9a32d0", "Write custom QML properties appended to control"), {}),
 }
 
 PROP_TOOLTIPS = {
-    "src":           "贴图文件路径 (assets/xxx.png)",
-    "pressedSource": "按下状态时显示的贴图（可选，留空则同 src）",
-    "action":        "点击触发的动作 (onClicked)",
-    "action_press":  "按下时执行的 JOG 动作，通常选 JOG_X+/JOG_Y+ 等方向移动",
-    "action_release": "抬起时执行的 JOG 动作，通常选 JOG_X_STOP/JOG_Y_STOP 等停止",
-    "sourceClipRect":"图片裁剪区域，例: Qt.rect(0, 0, 16, 26)",
-    "spriteFrame":   "精灵图当前帧，支持表达式: status.homedX ? 0 : 1",
-    "interval":      "定时器触发间隔（毫秒）",
-    "repeat":        "是否循环触发",
-    "running":       "是否启动定时器",
-    "enabled":       "控件是否可交互（可绑定 backend.isIdle 等）",
-    "borderThickness": "按钮内芯裁切边框厚度（像素）",
-    "shrinkAmount":  "按下时内芯塌陷像素",
-    "half":          "精灵图方向：左=第0帧，右=第1帧",
-    "isHorizontal":  "精灵图排列方向：开=横向，关=纵向",
-    "active":        "LED 亮/灭状态（可绑定 status.homedX 等）",
-    "bind":          "绑定到状态变量 (status.xxx / backend.xxx)",
-    "text":          "显示的文本内容",
-    "fontSize":      "字体大小（像素）",
-    "color":         "文字颜色 (Hex 色值)",
-    "bgColor":       "背景填充色 (Hex 色值)",
-    "opacity":       "透明度 (10-100%，数值越小越透明)",
-    "border":        "是否显示边框",
-    "borderW":       "边框宽度（像素）",
-    "borderC":       "边框颜色 (Hex 色值)",
-    "container":     "作为子控件容器（子控件相对定位）",
-    "decimals":      "小数位数（数值输入框精度）",
-    "activeLine":    "GCodeViewer 当前执行行号高亮 (可绑定 status.lineNumber)",
-    "allowSelection":"GCodeViewer 是否允许手动点选行 (可绑定 backend.isIdle)",
-    "showWorkAxes":  "GCodeGraphics 是否显示工件坐标轴",
-    "isOrthographic":"GCodeGraphics 正交/透视视图",
-    "cameraZoom":    "GCodeGraphics 正交相机缩放倍率",
-    "pinName":       "HAL 硬件引脚名称",
-    "isToggle":      "切换开关模式 (按下锁定/松开弹起)",
-    "defaultColor":  "HalButton 默认背景色",
-    "pressedColor":  "按下时的颜色",
-    "textColor":     "文字颜色",
-    "highlightColor":"高亮/主题强调色",
-    "accentColor":   "主题强调色 (标题栏/Slider/DRO 高亮)",
-    "activeColor":   "激活/点亮时的颜色",
-    "inactiveColor": "未激活/熄灭时的颜色",
-    "label":         "标签文字 (HalSlider 标题)",
-    "value":         "当前值 (可绑定 status.spindleSpeed 等实时值)",
-    "from":          "滑动条最小值",
-    "to":            "滑动条最大值",
-    "unit":          "数值单位 (mm / % / rpm 等)",
+    "src":           Tr.t("controls.s6_f1f0fb", "Sprite file path (assets/xxx.png)"),
+    "pressedSource": Tr.t("controls.s8_64c7d7", "Sprite for pressed state (optional, leave blank to use src)"),
+    "action":        Tr.t("controls.s120_58f9f8", "Action on click (onClicked)"),
+    "action_press":  Tr.t("controls.s121_fc64fb", "JOG action on press (JOG_X+ etc.)"),
+    "action_release": Tr.t("controls.s122_bc65ec", "JOG action on release (JOG_X_STOP etc.)"),
+    "sourceClipRect":Tr.t("controls.s123_016e44", "Clip region Qt.rect(0,0,w,h)"),
+    "spriteFrame":   Tr.t("controls.s124_900bce", "Sprite frame expr (status.homedX ? 0 : 1)"),
+    "interval":      Tr.t("controls.s56_1d4dab", "Timer trigger interval (ms)"),
+    "repeat":        Tr.t("controls.s36_b69760", "Whether to loop trigger"),
+    "running":       Tr.t("controls.s38_eaf2d6", "Whether to start the timer"),
+    "enabled":       Tr.t("controls.s128_7ac135", "Interactive (bindable to backend.isIdle)"),
+    "borderThickness": Tr.t("controls.s58_9a4b54", "Button inner border thickness (pixels)"),
+    "shrinkAmount":  Tr.t("controls.s60_862f24", "Pressed core collapse pixels"),
+    "half":          Tr.t("controls.s131_17d306", "Direction: Left=0, Right=1"),
+    "isHorizontal":  Tr.t("controls.s32_59e3f5", "Sprite layout: on=horizontal, off=vertical"),
+    "active":        Tr.t("controls.s133_a932eb", "LED on/off (bindable)"),
+    "bind":          Tr.t("controls.s24_0000e7", "Bind to state variable (status.xxx / backend.xxx)"),
+    "text":          Tr.t("controls.s96_a2f537", "Displayed text content"),
+    "fontSize":      Tr.t("controls.s50_1b03d0", "Font size (pixels)"),
+    "color":         Tr.t("controls.s76_f682db", "Text color (Hex color value)"),
+    "bgColor":       Tr.t("controls.s80_308179", "Background fill color (Hex color value)"),
+    "opacity":       Tr.t("controls.s139_c4da5e", "Opacity (10-100%)"),
+    "border":        Tr.t("controls.s42_739282", "Whether to show border"),
+    "borderW":       Tr.t("controls.s62_605c53", "Border width (pixels)"),
+    "borderC":       Tr.t("controls.s94_b74b89", "Border color (Hex color value)"),
+    "container":     Tr.t("controls.s40_7e20fe", "Child control container (relative positioning)"),
+    "decimals":      Tr.t("controls.s144_b4f40a", "Decimal places"),
+    "activeLine":    Tr.t("controls.s145_c4d3bd", "Active line (bind lineNumber)"),
+    "allowSelection":Tr.t("controls.s146_9c6327", "Manual line sel (bind isIdle)"),
+    "showWorkAxes":  Tr.t("controls.s46_6090b3", "GCodeGraphics show workpiece axes"),
+    "isOrthographic":Tr.t("controls.s48_6b4f05", "GCodeGraphics ortho/perspective view"),
+    "cameraZoom":    Tr.t("controls.s68_afb166", "GCodeGraphics orthographic camera zoom ratio"),
+    "pinName":       Tr.t("controls.s150_1db13e", "HAL pin name"),
+    "isToggle":      Tr.t("controls.s34_53b6a2", "Toggle switch (press=latched / release=unlatched)"),
+    "defaultColor":  Tr.t("controls.s88_110cad", "HalButton default background color"),
+    "pressedColor":  Tr.t("controls.s90_98c5bd", "Pressed state color"),
+    "textColor":     Tr.t("controls.s78_7ec907", "Text color"),
+    "highlightColor":Tr.t("controls.s92_c0a125", "Highlight/theme accent color"),
+    "accentColor":   Tr.t("controls.s156_7527f6", "Theme accent (title/Slider/DRO)"),
+    "activeColor":   Tr.t("controls.s84_a7c732", "Active/highlighted color"),
+    "inactiveColor": Tr.t("controls.s86_caa2f1", "Inactive/off color"),
+    "label":         Tr.t("controls.s98_52f8ff", "Label text (HalSlider title)"),
+    "value":         Tr.t("controls.s160_0e82c0", "Current value (bindable)"),
+    "from":          Tr.t("controls.s72_769d19", "Slider minimum value"),
+    "to":            Tr.t("controls.s74_7bed8c", "Slider maximum value"),
+    "unit":          Tr.t("controls.s163_6c924a", "Unit (mm/ %/ rpm)"),
 }
 
 # 支持绑定表达式（生成 $prop: backend.xxx 而非固定值）
@@ -263,7 +269,9 @@ def fill_template(ctrl):
         "$w":          str(ctrl.get("w", 80)),
         "$h":          str(ctrl.get("h", 40)),
         "$src":        os.path.basename(ctrl.get("src", "")).replace("\\\\", "/").replace("\\", "/") or "placeholder.png",
-        "$pressedSrc":  os.path.basename(ctrl.get("pressedSource", "")).replace("\\\\", "/").replace("\\", "/") or "",
+        "$pressedSrc":  (lambda _n: f'assetsDir + "/assets/{_n}"' if _n else '""')(
+            os.path.basename(ctrl.get("pressedSource", "")).replace("\\\\", "/").replace("\\", "/")
+        ),
         "$action":     ctrl.get("action", ""),
         "$fontSize":   str(ctrl.get("fontSize", 28)),
         "$color":      ctrl.get("color", "#00ff00"),
@@ -272,7 +280,7 @@ def fill_template(ctrl):
 		"$borderW":    str(ctrl.get("borderW", 1)),
         "$id":         ctrl.get("id", ""),
         "$text":       ctrl.get("text", ""),
-        "$title":      ctrl.get("title", "加载 G-Code 文件"),
+        "$title":      ctrl.get("title", Tr.t("fill_template.s165_d823a0", "Load G-Code file")),
         "$decimals":   str(ctrl.get("decimals", 4)),
         "$enabled":    _bind_val(ctrl, "enabled", "true", "false"),
         "$isHorizontal": _bind_val(ctrl, "isHorizontal", "true", "false"),
@@ -336,18 +344,32 @@ def fill_template(ctrl):
     result = re.sub(r'                text: \n', '', result)
     result = re.sub(r'                gcodeLines: \n', '', result)
     result = re.sub(r'                onClicked: \n', '', result)
+    result = re.sub(r'                latched: \n', '', result)
     result = re.sub(r'                id: \n', '', result)
-    result = result.replace("$extraQml", "")
-
-    # 注入手写备用属性（extraQml）到控件定义末尾
+    # 注入手写备用属性（extraQml）
     extra = ctrl.get("extraQml", "").strip()
     if extra:
-        idx = result.rfind("}")
+        idx = result.find("$extraQml")
         if idx >= 0:
-            indent = "        "
+            # 有 $extraQml 占位符：用占位符所在行的缩进作为基准，整行替换
+            line_start = result.rfind("\n", 0, idx) + 1
+            line_end = result.find("\n", idx)
+            if line_end < 0:
+                line_end = len(result)
+            indent = result[line_start:idx]  # 占位符前的缩进前缀
             extra_lines = extra.split("\n")
             extra_block = "\n".join(indent + ln for ln in extra_lines)
-            result = result[:idx] + extra_block + "\n    " + result[idx:]
+            result = result[:line_start] + extra_block + "\n" + result[line_end + 1:]
+        else:
+            # 没有占位符：注入到最后一个 } 之前
+            idx = result.rfind("}")
+            if idx >= 0:
+                indent = "        "
+                extra_lines = extra.split("\n")
+                extra_block = "\n".join(indent + ln for ln in extra_lines)
+                result = result[:idx] + extra_block + "\n    " + result[idx:]
+    else:
+        result = result.replace("$extraQml", "")
 
     return result
 

@@ -7,4 +7,5 @@ FileDialog {
         path = path.replace(/^(file:\/{2,3})/, "/").replace(/^\/\//, "/")
         backend.loadProgram(path)
     }
+    $extraQml
 }

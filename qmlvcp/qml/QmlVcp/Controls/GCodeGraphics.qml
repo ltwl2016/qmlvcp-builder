@@ -62,7 +62,7 @@ Item {
     property real machineMinZ: typeof backend !== "undefined" ? backend.machineMinZ : 0
     property real machineMaxZ: typeof backend !== "undefined" ? backend.machineMaxZ : 300
     // 坐标轴长度 (预留的数据接口)
-    property real axisLength: 50
+    property real axisLength: 24
     // 坐标轴偏移量 (预留的数据接口，可用来在 3D 空间中移动【机床】原点指示器的位置)
     property real axisOffsetX: 0
     property real axisOffsetY: 0
@@ -189,12 +189,12 @@ Item {
                 z: -root.axisOffsetY
                 
                 geometry: AxesGeometry {
-                    axisLength: root.axisLength // 绑定刚才预留的数据接口
+                    axisLength: root.axisLength * 0.01 // 绑定刚才预留的数据接口
                 }
                 materials: [ DefaultMaterial { 
                     lighting: DefaultMaterial.NoLighting 
                     vertexColorsEnabled: true 
-                    opacity: 0.5  // 设置透明度为 50%
+                    opacity: 0.9  // 设置透明度为 90%
                 } ]
             }
             
@@ -209,12 +209,12 @@ Item {
                 z: -root.workOffsetY
                 
                 geometry: AxesGeometry {
-                    axisLength: root.axisLength * 0.8 // 工件坐标轴略短于机床绝对坐标轴，便于肉眼区分
+                    axisLength: root.axisLength // 工件坐标轴略短于机床绝对坐标轴，便于肉眼区分
                 }
                 materials: [ DefaultMaterial { 
                     lighting: DefaultMaterial.NoLighting 
                     vertexColorsEnabled: true 
-                    opacity: 0.5  // 设置透明度为 50%
+                    opacity: 0.9  // 设置透明度为 90%
                 } ]
             }
             
@@ -289,6 +289,7 @@ Item {
                     lighting: DefaultMaterial.NoLighting 
                     vertexColorsEnabled: true
                     lineWidth: 1.0 // 在这里修改 实时走刀光束的线条粗细（加粗到 3.0 更显眼）
+                    opacity: 0.7  // 设置透明度为 50%
                 } ]
             }
             
@@ -325,10 +326,10 @@ Item {
                 Model {
                     source: "#Cone"
                     
-                    y: 30
+                    y: 20
                     
                     eulerRotation.x: 180
-                    scale: Qt.vector3d(0.2, 0.3, 0.2)
+                    scale: Qt.vector3d(0.15, 0.2, 0.15)
                     materials: [ DefaultMaterial { 
                         diffuseColor: "white"
                         opacity: 0.7  // 设置透明度为 50%
@@ -358,14 +359,14 @@ Item {
             var dx = mouse.x - lastX
             var dy = mouse.y - lastY
             
-            if (mouse.buttons & Qt.LeftButton) {
-                // 左键：旋转
+            if (mouse.buttons & Qt.RightButton) {
+                // 右键：旋转
                 sceneRoot.eulerRotation.y += dx * 0.5
                 sceneRoot.eulerRotation.x += dy * 0.5
-            } else if (mouse.buttons & Qt.RightButton) {
-                // 右键：平移（这里根据摄像头高度做一点比例适配，越远移得越快）
+            } else if (mouse.buttons & Qt.LeftButton) {
+                // 左键：平移（这里根据摄像头高度做一点比例适配，越远移得越快）
                 if (!root.isOrthographic) {
-                    var panSpeed = 0.5 * (root.cameraY / 800.0);
+                    var panSpeed = 0.8 * (root.cameraY / 800.0);
                     if (panSpeed < 0.1) panSpeed = 0.1;
                     sceneRoot.x += dx * panSpeed;
                     sceneRoot.y -= dy * panSpeed; 

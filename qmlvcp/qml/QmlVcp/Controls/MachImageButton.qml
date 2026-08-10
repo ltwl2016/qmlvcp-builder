@@ -39,7 +39,7 @@ Item {
 
     Image {
         id: bgImage
-        source: root.isPressed && root.pressedSource !== "" ? root.pressedSource : root.source
+        source: root.isPressed && !root.isSprite && root.pressedSource !== "" ? root.pressedSource : root.source
         fillMode: Image.Stretch
         smooth: true
         width: root.isSprite && root.spriteOrientation === 0 ? root.width * 2 : root.width
@@ -56,12 +56,13 @@ Item {
 
     Image {
         source: root.source
+        visible: !(root.isPressed && !root.isSprite && root.pressedSource !== "")
         sourceClipRect: Qt.rect(frameX + borderThickness, frameY + borderThickness, fw - borderThickness * 2, fh - borderThickness * 2)
         smooth: true
-        x: (root.isPressed && root.pressedSource === "") ? borderThickness + shrinkAmount : borderThickness
-        y: (root.isPressed && root.pressedSource === "") ? borderThickness + shrinkAmount : borderThickness
-        width: (root.isPressed && root.pressedSource === "") ? root.width - (borderThickness + shrinkAmount) * 2 : root.width - borderThickness * 2
-        height: (root.isPressed && root.pressedSource === "") ? root.height - (borderThickness + shrinkAmount) * 2 : root.height - borderThickness * 2
+        x: (root.isPressed && (root.isSprite || root.pressedSource === "")) ? borderThickness + shrinkAmount : borderThickness
+        y: (root.isPressed && (root.isSprite || root.pressedSource === "")) ? borderThickness + shrinkAmount : borderThickness
+        width: (root.isPressed && (root.isSprite || root.pressedSource === "")) ? root.width - (borderThickness + shrinkAmount) * 2 : root.width - borderThickness * 2
+        height: (root.isPressed && (root.isSprite || root.pressedSource === "")) ? root.height - (borderThickness + shrinkAmount) * 2 : root.height - borderThickness * 2
     }
 
     implicitWidth: root.isSprite && root.spriteOrientation === 0 ? (bgImage.sourceSize.width / 2) : bgImage.sourceSize.width

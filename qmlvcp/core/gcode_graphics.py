@@ -46,29 +46,29 @@ class AxesGeometry(QQuick3DGeometry):
 
         r_c = (1.0, 0.0, 0.0, 1.0)
         g_c = (0.0, 1.0, 0.0, 1.0)
-        b_c = (0.0, 0.0, 1.0, 1.0)
+        b_c = (0.0, 0.2, 1.0, 1.0)
 
         # --- 第一部分：画原始的 3 根主坐标轴 ---
-        add_line((0.0, 0.0, 0.0), (l, 0.0, 0.0), r_c)      # 红色 X
-        add_line((0.0, 0.0, 0.0), (0.0, 0.0, -l), g_c)     # 绿色 Y
+        add_line((0.0, 0.0, 0.0), (l, 0.0, 0.0), g_c)      # 绿色 X
+        add_line((0.0, 0.0, 0.0), (0.0, 0.0, -l), r_c)     # 红色 Y
         add_line((0.0, 0.0, 0.0), (0.0, l, 0.0), b_c)      # 蓝色 Z
         
         # --- 第二部分：纯线段勾勒的 XYZ 字母 (原汁原味的工业风) ---
-        s = l * 0.1  # 字母线条的大小
+        s = l * 0.09  # 字母线条的大小
         
         # 1. 勾勒 X 字母 (红) 平放于工作台 (3D X 和 -Z 面)
-        cx, cy, cz = l + s * 1.5, 0.0, 0.0
-        add_line((cx - s, cy, cz - s), (cx + s, cy, cz + s), r_c)
-        add_line((cx + s, cy, cz - s), (cx - s, cy, cz + s), r_c)
+        cx, cy, cz = l + s * 2.5, 0.0, 0.0
+        add_line((cx - s, cy, cz - s), (cx + s, cy, cz + s), g_c)
+        add_line((cx + s, cy, cz - s), (cx - s, cy, cz + s), g_c)
 
         # 2. 勾勒 Y 字母 (绿) 同样平放于工作台
-        cx, cy, cz = 0.0, 0.0, -l - s * 1.5
-        add_line((cx - s, cy, cz - s), (cx, cy, cz), g_c)
-        add_line((cx + s, cy, cz - s), (cx, cy, cz), g_c)
-        add_line((cx, cy, cz), (cx, cy, cz + s), g_c)
+        cx, cy, cz = 0.0, 0.0, -l - s * 2.5
+        add_line((cx - s, cy, cz - s), (cx, cy, cz),r_c)
+        add_line((cx + s, cy, cz - s), (cx, cy, cz), r_c)
+        add_line((cx, cy, cz), (cx, cy, cz + s), r_c)
 
         # 3. 勾勒 Z 字母 (蓝) 垂直立起，方便侧面观察
-        cx, cy, cz = 0.0, l + s * 1.5, 0.0
+        cx, cy, cz = 0.0, l + s * 2.5, 0.0
         add_line((cx - s, cy + s, cz), (cx + s, cy + s, cz), b_c)
         add_line((cx + s, cy + s, cz), (cx - s, cy - s, cz), b_c)
         add_line((cx - s, cy - s, cz), (cx + s, cy - s, cz), b_c)        
@@ -224,10 +224,10 @@ class TrajectoryGeometry(QQuick3DGeometry):
                     raw_bytes.extend(struct.pack(fmt, c1[0], c1[2], -c1[1], *color))
                     raw_bytes.extend(struct.pack(fmt, c2[0], c2[2], -c2[1], *color))
 
-                dim_color = (0.7, 0.0, 0.0, 1.0) # 浅灰红色标注
+                dim_color = (1.0, 0.4, 0.0, 1.9) # 浅灰红色标注
                 max_span = max((maxX - minX), (maxY - minY))
                 sc = max(1.0, min(max_span * 0.03, 80.0)) # 字体高度，按工件长宽比例自适应缩放
-                offset = sc * 1.5 # 尺寸包围盒往外偏移的距离
+                offset = sc * 3.5 # 尺寸包围盒往外偏移的距离
                 
                 # 画底边界线 (标注机床 X 长度) 
                 add_line_cnc((minX, minY - offset, minZ), (maxX, minY - offset, minZ), dim_color)
@@ -290,11 +290,11 @@ class TrajectoryGeometry(QQuick3DGeometry):
                                 add_line_cnc(pts[lines_map[idx][0]], pts[lines_map[idx][1]], color)
                         curr_pos += sc * 0.9
 
-                val_x = f"X:{maxX - minX:.2f}"
+                val_x = f"{maxX - minX:.2f}"
                 len_x = len(val_x)*sc*0.9 - sc*0.3
                 draw_text_cnc(val_x, (minX+maxX)/2 - len_x/2, minY - offset - sc*0.5, minZ, sc, dim_color)
                 
-                val_y = f"Y:{maxY - minY:.2f}"
+                val_y = f"{maxY - minY:.2f}"
                 len_y = len(val_y)*sc*0.9 - sc*0.3
                 # 垂直居中，靠在刻度线左侧
                 draw_text_cnc(val_y, minX - offset - sc*1.5, (minY+maxY)/2 - len_y/2, minZ, sc, dim_color, vertical=True)

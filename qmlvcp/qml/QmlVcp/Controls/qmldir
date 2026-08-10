@@ -1,6 +1,7 @@
 module QmlVcp.Controls
 HalInputMonitor 1.0 HalInputMonitor.qml
 MachImageButton 1.0 MachImageButton.qml
+ToggleButton 1.0 ToggleButton.qml
 MachLED 1.0 MachLED.qml
 GCodeGraphics 1.0 GCodeGraphics.qml
 MachTextInput 1.0 MachTextInput.qml

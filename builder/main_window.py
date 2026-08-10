@@ -39,8 +39,9 @@ from builder.properties_mixin import PropertiesMixin
 from builder.controls import (
     get_display_list, get_defaults, get_properties
 )
+from lang import Tr
 
-WINDOW_TITLE = "QmlVcp Builder — CNC 界面拼装工具"
+WINDOW_TITLE = Tr.t("ui.windowTitle.label", "QmlVcp Builder — CNC Interface Assembly Tool")
 DEFAULT_W = 1280
 DEFAULT_H = 800
 
@@ -91,6 +92,9 @@ class MainWindow(PropertiesMixin, QMainWindow):
         _ui_path = os.path.join(os.path.dirname(__file__), "mainwindow.ui")
         _uic.loadUi(_ui_path, self)
 
+        # 翻译 .ui 骨架中所有硬编码字符串
+        self._translate_ui()
+
         # 初始数据回填到 .ui 控件
         self.dirEdit.setText(self._project_dir)
         self.winWSpin.setValue(self._window_w)
@@ -135,6 +139,86 @@ class MainWindow(PropertiesMixin, QMainWindow):
         self._on_canvas_select(-1)  # 默认显示画布属性
         self._setup_shortcuts()
         self.showMaximized()
+
+    def _translate_ui(self):
+        """用 Tr.t() 覆盖 mainwindow.ui 骨架中所有硬编码的中文字符串。"""
+        # 标签
+        self.lblProjectDir.setText(Tr.t("ui.lblProjectDir.text",
+"Project Directory:"))
+        self.lblProjectDir.setToolTip(Tr.t("ui.lblProjectDir.toolTip",
+"Project root directory path"))
+        self.lblWindowSize.setText(Tr.t("ui.lblWindowSize.text",
+"Window:"))
+        self.lblVenvLabel.setText(Tr.t("ui.lblVenvLabel.text",
+"Virtual Environment:"))
+        self.lblPySide6Label.setText(Tr.t("ui.lblPySide6Label.text",
+"PySide6:"))
+        self.lblPage.setText(Tr.t("ui.lblPage.text",
+"Page:"))
+        self.lblCtrlHint.setText(Tr.t("ui.lblCtrlHint.text",
+"Double-click list item or select then click button:"))
+        self.lblExportPreview.setText(Tr.t("ui.lblExportPreview.text",
+"Generated Main.qml preview:"))
+
+        # 按钮
+        self.btnBrowse.setText(Tr.t("ui.btnBrowse.text",
+"Browse..."))
+        self.btnPreview.setText(Tr.t("ui.btnPreview.text",
+"Preview"))
+        self.btnOpenProject.setText(Tr.t("ui.btnOpenProject.text",
+"Open Project"))
+        self.btnRefreshPreview.setText(Tr.t("ui.btnRefreshPreview.text",
+"Refresh Preview"))
+        self.btnCreateVenv.setText(Tr.t("ui.btnCreateVenv.text",
+"Create Virtual Environment"))
+        self.btnInstallPySide6.setText(Tr.t("ui.btnInstallPySide6.text",
+"Install PySide6"))
+        self.btnAddCanvas.setText(Tr.t("ui.btnAddCanvas.text",
+"Add Canvas"))
+        self.btnAddControl.setText(Tr.t("ui.btnAddControl.text",
+"Double-click to add control to canvas"))
+        self.btnDeleteControl.setText(Tr.t("ui.btnDeleteControl.text",
+"Delete Selected Control"))
+
+        # 分组标题
+        self.grpEnvInfo.setTitle(Tr.t("ui.grpEnvInfo.title",
+"Project Environment"))
+        self.grpCtrlList.setTitle(Tr.t("ui.grpCtrlList.title",
+"Control List"))
+        self.grpProps.setTitle(Tr.t("ui.grpProps.title",
+"Control Properties"))
+
+        # 标签页标题
+        self.mainTabs.setTabText(0, Tr.t("ui.tabEnv.title",
+"Environment Setup"))
+        self.mainTabs.setTabText(1, Tr.t("ui.tabAssembly.title",
+"Page Assembly"))
+        self.mainTabs.setTabText(2, Tr.t("ui.tabExport.title",
+"Project Export"))
+
+        # 提示信息
+        self.propsInfo.setText(Tr.t("ui.propsInfo.text",
+"Select a control on canvas to edit properties"))
+
+        # SpinBox tooltip
+        self.winWSpin.setToolTip(Tr.t("ui.winWSpin.toolTip",
+"Total width of export container"))
+        self.winHSpin.setToolTip(Tr.t("ui.winHSpin.toolTip",
+"Total height of export container"))
+
+        # 复选框
+        self.chkBundle.setText(Tr.t("ui.chkBundle.text",
+"Copy qmlvcp framework to project (Recommended: ready-to-use)"))
+        self.chkBundle.setToolTip(Tr.t("ui.chkBundle.toolTip",
+    "Checked = qmlvcp bundled into project, ready to use (Recommended)"
+    "Unchecked = qmlvcp framework must be manually placed in project parent directory"
+))
+        self.chkStandalone.setText(Tr.t("ui.chkStandalone.text",
+"Standalone Window Mode (Window)"))
+        self.chkStandalone.setToolTip(Tr.t("ui.chkStandalone.toolTip",
+    "Checked = Standalone window mode with own layout"
+    "Unchecked = Embedded mode, used as QQuickWidget inside host window"
+))
 
     @property
     def _active_controls(self):
@@ -196,7 +280,7 @@ class MainWindow(PropertiesMixin, QMainWindow):
             else:
                 page["width"] = max(200, self._window_w - sp_w)
         self._side_panel["x"] = page["width"]
-        self.chkMatchWinW.setText("编辑中禁止导出....." if checked else "已可以允许导出....")
+        self.chkMatchWinW.setText(Tr.t("_canvas_original_w.s10_5e9df7", "Export disabled while editing...") if checked else Tr.t("ui.chkMatchWinW.text", "Can allow export...."))
         self._prop_w.blockSignals(True)
         self._prop_w.setValue(page["width"])
         self._prop_w.blockSignals(False)
@@ -212,18 +296,18 @@ class MainWindow(PropertiesMixin, QMainWindow):
     def _on_stack_idx_toggled(self, checked: bool):
         """StackLayout currentIndex 切换: 打勾=0(主页0), 取消=1(主页1)。"""
         self._stack_current_index = 0 if checked else 1
-        self.chkStackIdx.setText("主页0" if checked else "主页1")
+        self.chkStackIdx.setText(Tr.t("ui.chkStackIdx.text", "Main Page 0") if checked else Tr.t("_stack_current_index.s14_12b5a0", "Page 1"))
 
     def _on_toggle_zone_focus(self):
         """切换编辑左侧/右侧区域的基础属性。"""
         if self._zone_edit_focus == "page":
             self._zone_edit_focus = "side_panel"
             self._edit_mode = "side_panel"
-            self.btnZoneToggle.setText("右侧")
+            self.btnZoneToggle.setText(Tr.t("_edit_mode.s15_de2a77", "Right"))
         else:
             self._zone_edit_focus = "page"
             self._edit_mode = "page"
-            self.btnZoneToggle.setText("左侧")
+            self.btnZoneToggle.setText(Tr.t("ui.btnZoneToggle.text", "Left Side"))
         # 取消控件选中，显示区域属性
         self._canvas._sel_index = -1
         self._show_page_props()
@@ -315,7 +399,7 @@ class MainWindow(PropertiesMixin, QMainWindow):
             self._canvas._bg_pixmap = None
             self._canvas._loaded_bg_path = ""
             self._canvas.clear()
-            self.lblBg.setText("未加载背景")
+            self.lblBg.setText(Tr.t("ui.lblBg.text", "No background loaded"))
         self._canvas._page_offset = (pg.get("x", 0), pg.get("y", 0),
                                      pg.get("width", 1024), pg.get("height", 768))
         self._canvas._apply_zoom(pg.get("width", 1024), pg.get("height", 768))
@@ -364,11 +448,11 @@ class MainWindow(PropertiesMixin, QMainWindow):
         """页面标签右键菜单。"""
         from PyQt5.QtWidgets import QMenu, QInputDialog
         menu = QMenu(self)
-        act_rename = menu.addAction("重命名")
+        act_rename = menu.addAction(Tr.t("_page_menu.s25_c8ce4b", "Rename"))
         action = menu.exec_(self._page_btns[idx].mapToGlobal(pos))
         if action == act_rename:
             old = self._pages[idx]["name"]
-            new, ok = QInputDialog.getText(self, "重命名页面", "名称:", text=old)
+            new, ok = QInputDialog.getText(self, Tr.t("_page_menu.s26_c9d044", "Rename page"), Tr.t("_page_menu.s27_1e8416", "Name:"), text=old)
             if ok and new.strip():
                 self._pages[idx]["name"] = new.strip()
                 self._page_btns[idx].setText(new.strip())
@@ -462,7 +546,7 @@ class MainWindow(PropertiesMixin, QMainWindow):
         self.exportPreview.setFont(QFont("Courier New", 10))
 
     def _browse_dir(self):
-        d = QFileDialog.getExistingDirectory(self, "选择项目目录", self._project_dir)
+        d = QFileDialog.getExistingDirectory(self, Tr.t("_browse_dir.s30_d076ed", "Select project directory"), self._project_dir)
         if d:
             self._project_dir = d
             self.dirEdit.setText(d)
@@ -476,7 +560,7 @@ class MainWindow(PropertiesMixin, QMainWindow):
         if sys.platform == "win32":
             main_py = os.path.join(path, "main.py")
             if not os.path.isfile(main_py):
-                QMessageBox.warning(self, "错误", f"未找到 main.py，请先导出项目。\n{main_py}")
+                QMessageBox.warning(self, Tr.t("_open_project_dir.s35_7030ff", "Error"), f"未找到 main.py，请先导出项目。\n{main_py}")
                 return
             try:
                 subprocess.Popen(
@@ -484,9 +568,9 @@ class MainWindow(PropertiesMixin, QMainWindow):
                     cwd=path,
                     creationflags=subprocess.CREATE_NEW_CONSOLE,
                 )
-                self.statusLabel.setText("项目已启动")
+                self.statusLabel.setText(Tr.t("_open_project_dir.s36_c20b75", "Project started"))
             except Exception as e:
-                QMessageBox.critical(self, "启动失败", str(e))
+                QMessageBox.critical(self, Tr.t("_open_project_dir.s37_efb08e", "Launch failed"), str(e))
         else:
             # Linux / macOS
             start_sh = os.path.join(path, "start.sh")
@@ -495,7 +579,7 @@ class MainWindow(PropertiesMixin, QMainWindow):
             else:
                 runner, entry = sys.executable, "main.py"
                 if not os.path.isfile(os.path.join(path, entry)):
-                    QMessageBox.warning(self, "错误",
+                    QMessageBox.warning(self, Tr.t("_open_project_dir.s35_7030ff", "Error"),
                         f"未找到 {entry}，请先导出项目。\n{os.path.join(path, entry)}")
                     return
             try:
@@ -503,28 +587,28 @@ class MainWindow(PropertiesMixin, QMainWindow):
                     [runner, entry],
                     cwd=path,
                 )
-                self.statusLabel.setText("项目已启动")
+                self.statusLabel.setText(Tr.t("_open_project_dir.s36_c20b75", "Project started"))
             except Exception as e:
-                QMessageBox.critical(self, "启动失败", str(e))
+                QMessageBox.critical(self, Tr.t("_open_project_dir.s37_efb08e", "Launch failed"), str(e))
 
     def _update_env_status(self):
         mgr = EnvManager(self._project_dir)
         ve = mgr.venv_exists
         sys_ps6 = mgr.system_has_pyside6
         if ve:
-            self.lblVenv.setText("✅ 已创建")
+            self.lblVenv.setText(Tr.t("_update_env_status.s38_57da3a", "✅ Created"))
             self.lblVenv.setToolTip(f"虚拟环境: {mgr.venv_dir}")
         elif sys_ps6:
-            self.lblVenv.setText("⚡ 可选（系统已有 PySide6）")
-            self.lblVenv.setToolTip("系统 Python 已自带 PySide6，可不创建 venv")
+            self.lblVenv.setText(Tr.t("_update_env_status.s39_9d3334", "⚡ Optional (PySide6 on system)"))
+            self.lblVenv.setToolTip(Tr.t("_update_env_status.s40_a5f9d8", "System Python already has PySide6; venv optional"))
         else:
-            self.lblVenv.setText("❌ 未创建")
-            self.lblVenv.setToolTip("请点击「创建虚拟环境」在项目目录下创建 venv")
+            self.lblVenv.setText(Tr.t("_update_env_status.s41_db20cb", "❌ Not created"))
+            self.lblVenv.setToolTip(Tr.t("_update_env_status.s42_978101", "Click 'Create Virtual Environment'"))
         has_ps6 = mgr.pyside6_installed
-        self.lblPySide6.setText("✅ 已安装" if has_ps6 else "❌ 未安装")
+        self.lblPySide6.setText(Tr.t("_update_env_status.s43_3c9c64", "✅ Installed") if has_ps6 else Tr.t("_update_env_status.s44_3698f2", "❌ Not installed"))
         self.lblPySide6.setToolTip(
-            "PySide6 已在 venv 或系统 Python 中检测到" if has_ps6
-            else "请创建 venv 后点击「安装 PySide6」"
+            Tr.t("_update_env_status.s45_046411", "PySide6 detected in venv or system Python") if has_ps6
+            else Tr.t("_update_env_status.s46_3f7c33", "Create venv first, then click 'Install PySide6'")
         )
         self.btnCreateVenv.setEnabled(not has_ps6)
         self.btnInstallPySide6.setEnabled(not has_ps6)
@@ -547,7 +631,7 @@ class MainWindow(PropertiesMixin, QMainWindow):
     def _on_install_pyside6(self):
         mgr = EnvManager(self._project_dir)
         if not mgr.venv_exists:
-            QMessageBox.warning(self, "提示", "请先创建虚拟环境")
+            QMessageBox.warning(self, Tr.t("_open_project.s65_02d981", "Notice"), Tr.t("_on_install_pyside6.s48_293fcc", "Please create venv first"))
             return
 
         self.envLog.clear()
@@ -650,7 +734,7 @@ class MainWindow(PropertiesMixin, QMainWindow):
         """画布右键菜单。"""
         from PyQt5.QtWidgets import QMenu
         menu = QMenu(self)
-        menu.addAction("选择贴图…", self._pick_image_for_control)
+        menu.addAction(Tr.t("_canvas_menu.s51_43ea23", "Select image…"), self._pick_image_for_control)
         # 放入容器：仅非容器控件可见
         si = self._canvas._sel_index
         if si >= 0:
@@ -660,16 +744,16 @@ class MainWindow(PropertiesMixin, QMainWindow):
                 containers = [(i, cc) for i, cc in enumerate(ctrls)
                               if cc.get("type") == "Rectangle" and cc.get("container")]
                 if containers:
-                    sub = menu.addMenu("放入容器")
-                    sub.addAction("(取消/独立)", lambda: self._assign_container(-1))
+                    sub = menu.addMenu(Tr.t("_canvas_menu.s52_972c40", "Put in container"))
+                    sub.addAction(Tr.t("_canvas_menu.s53_26da79", "(Cancel / Standalone)"), lambda: self._assign_container(-1))
                     for ci, cc in containers:
                         name = cc.get("text", "") or f"容器#{ci}"
                         sub.addAction(name, lambda p=ci: self._assign_container(p))
             menu.addSeparator()
-            menu.addAction("复制", self._copy_control)
-            menu.addAction("删除", self._delete_control)
+            menu.addAction(Tr.t("_canvas_menu.s54_79d3ab", "Copy"), self._copy_control)
+            menu.addAction(Tr.t("_canvas_menu.s55_2f4aad", "Delete"), self._delete_control)
         if self._clipboard is not None:
-            menu.addAction("粘贴", self._paste_control)
+            menu.addAction(Tr.t("_canvas_menu.s56_eafbec", "Paste"), self._paste_control)
         menu.exec_(self._canvas.mapToGlobal(pos))
 
     def _assign_container(self, idx: int):
@@ -723,9 +807,9 @@ class MainWindow(PropertiesMixin, QMainWindow):
 
     def _get_zone_name(self):
         """返回当前编辑区的显示名称。"""
-        names = {"page": "页面", "side_panel": "右侧面板",
-                 "topbar": "顶部导航", "bottombar": "底部状态"}
-        return names.get(self._edit_mode, "页面")
+        names = {"page": Tr.t("_get_zone_name.s61_59ceff", "Page"), "side_panel": Tr.t("_get_zone_name.s58_dd5b33", "Right panel"),
+                 "topbar": Tr.t("_get_zone_name.s59_ed046e", "Top bar"), "bottombar": Tr.t("_get_zone_name.s60_9435ef", "Bottom status")}
+        return names.get(self._edit_mode, Tr.t("_get_zone_name.s61_59ceff", "Page"))
 
     def _delete_control(self):
         idx = self._canvas._sel_index
@@ -770,7 +854,7 @@ class MainWindow(PropertiesMixin, QMainWindow):
 
     def _open_project(self):
         """从已导出的项目目录导入完整数据（页面 + 区域）。"""
-        d = QFileDialog.getExistingDirectory(self, "打开项目目录", self._project_dir)
+        d = QFileDialog.getExistingDirectory(self, Tr.t("_open_project.s64_2ee1fa", "Open project directory"), self._project_dir)
         if not d:
             return
         try:
@@ -778,7 +862,7 @@ class MainWindow(PropertiesMixin, QMainWindow):
             result = import_project(d)
             pages = result.get("pages", [])
             if not pages:
-                QMessageBox.warning(self, "提示", "未找到可导入的页面")
+                QMessageBox.warning(self, Tr.t("_open_project.s65_02d981", "Notice"), Tr.t("_open_project.s66_cc0fb3", "No importable pages found"))
                 return
 
             self._pages = pages
@@ -820,9 +904,9 @@ class MainWindow(PropertiesMixin, QMainWindow):
                 msg += f"\n顶部导航: {len(self._topbar['controls'])} 控件"
             if self._bottombar.get("controls"):
                 msg += f"\n底部状态: {len(self._bottombar['controls'])} 控件"
-            QMessageBox.information(self, "完成", msg)
+            QMessageBox.information(self, Tr.t("_bottombar.s67_769d88", "Done"), msg)
         except Exception as e:
-            QMessageBox.critical(self, "导入失败", str(e))
+            QMessageBox.critical(self, Tr.t("_bottombar.s68_fddcd7", "Import failed"), str(e))
 
     def _refresh_preview(self):
         from builder.project_exporter import generate_main_qml_multi, generate_page_qml
@@ -841,7 +925,7 @@ class MainWindow(PropertiesMixin, QMainWindow):
 
     def _do_export(self):
         if not self._page["controls"] and len(self._pages) == 1:
-            QMessageBox.warning(self, "提示", "请先添加至少一个控件")
+            QMessageBox.warning(self, Tr.t("_open_project.s65_02d981", "Notice"), Tr.t("_do_export.s70_eb7068", "Please add at least one control"))
             return
 
         bundle = self.chkBundle.isChecked()
@@ -850,7 +934,7 @@ class MainWindow(PropertiesMixin, QMainWindow):
         # 不 bundle 时确认用户知道需要手动放置 qmlvcp
         if not bundle:
             reply = QMessageBox.question(
-                self, "确认",
+                self, Tr.t("_do_export.s71_e83a25", "Confirm"),
                 "未勾选「框架复制到项目」模式。\n\n"
                 "导出的项目需要 qmlvcp 框架放在其上级目录才能运行：\n"
                 f"  {os.path.dirname(self._project_dir)}/qmlvcp/\n\n"
@@ -862,7 +946,7 @@ class MainWindow(PropertiesMixin, QMainWindow):
                 return
 
         if bundle:
-            self.statusLabel.setText("正在复制 qmlvcp 框架...")
+            self.statusLabel.setText(Tr.t("_do_export.s76_1da0c5", "Copying qmlvcp framework..."))
         # 保存当前页
         self._page["controls"] = self._canvas._controls
         files = export_project(
@@ -882,9 +966,9 @@ class MainWindow(PropertiesMixin, QMainWindow):
             stack_current_index=self._stack_current_index,
         )
         QMessageBox.information(
-            self, "导出完成",
+            self, Tr.t("_do_export.s77_446e67", "Export complete"),
             f"项目已生成到:\n{self._project_dir}\n"
             f"模式: {'自带 qmlvcp' if bundle else '引用外部 qmlvcp'}\n\n"
             + "\n".join(os.path.basename(f) for f in files)
         )
-        self.statusLabel.setText("导出完成 ✅")
+        self.statusLabel.setText(Tr.t("_do_export.s78_4a08c7", "Export complete ✅"))

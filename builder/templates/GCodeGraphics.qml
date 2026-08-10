@@ -1,4 +1,5 @@
 Rectangle {
+	id: $id
     x: $x
     y: $y
     width: $w

@@ -51,6 +51,8 @@ ACTIONS = {
         "ZERO_X":               'backend.zeroAxis("X")',
         "ZERO_Y":               'backend.zeroAxis("Y")',
         "ZERO_Z":               'backend.zeroAxis("Z")',
+        "ZERO_A":               'backend.zeroAxis("A")',
+        "ZERO_C":               'backend.zeroAxis("C")',
         "GOTO_SAFE_Z":          "backend.gotoSafeZ()",
         "GOTO_XY_ZERO":         "backend.gotoXYZero()",
 
@@ -199,6 +201,10 @@ ACTIONS = {
     # ═══════════════════════════════════════════════════
     "EmergencyStop": {
         "--- 电源 ---":         "",
+        "--- 电源 ---":         "",
+        "TOGGLE_POWER":         "backend.togglePowerState()",
+        "POWER_ON":             "backend.setMachinePower(1)",
+        "POWER_OFF":            "backend.setMachinePower(0)",
         "ESTOP":                "backend.setEstop(1)",
         "ESTOP_RESET":          "backend.setEstop(0)",
         "CLEAR_ALARM":          "backend.clearAlarm()",
@@ -327,37 +333,7 @@ STATUS_BINDS = {
     # ═══════════════════════════════════════════════════
     # ▼ Text (Label) —— 同 DRO 但需要程序相关
     # ═══════════════════════════════════════════════════
-    "Text (Label)": {
-        "--- 坐标 ---":         "",
-        "displayX":             "backend.displayToolX.toFixed(4)",
-        "displayY":             "backend.displayToolY.toFixed(4)",
-        "displayZ":             "backend.displayToolZ.toFixed(4)",
-        "displayA":             "backend.displayToolA.toFixed(4)",
-        "displayB":             "backend.displayToolB.toFixed(4)",
-        "displayC":             "backend.displayToolC.toFixed(4)",
-
-        "--- status ---":       "",
-        "st.spindleSpeed":      "status.spindleSpeed",
-        "st.feed":              "status.feed",
-        "st.actualFeed":        "status.actualFeed",
-        "st.feedOverride":      "status.feedOverride",
-        "st.machineMode":       "status.taskMode",
-        "st.interpState":       "status.interpState",
-
-        "--- backend 状态 ---": "",
-        "isRunning":            "backend.machineOn",
-        "machineMode":          "backend.machineMode",
-
-        "--- 程序 ---":         "",
-        "programFile":          "backend.programFile",
-        "programName":          "backend.programName",
-        "programLines":         "backend.programLines",
-        "lineNumber":           "backend.lineNumber",
-        "modal":                "backend.modal",
-        "timeRunning":          "backend.processingTimeStr",
-        "timeTotal":            "backend.totalTimeStr",
-        "dateStr":              "backend.dateStr",
-        "timeStr":              "backend.timeStr",
+    "Text (Label)": {"_inherit":           "LED",
     },
 
     # ═══════════════════════════════════════════════════
@@ -384,6 +360,7 @@ STATUS_BINDS = {
         "st.homedX":            "status.homedX",
         "st.homedY":            "status.homedY",
         "st.homedZ":            "status.homedZ",
+        "st.homedA":            "status.homedA",
         "st.isAllHomed":        "status.isAllHomed",
         "st.hasError":          "status.hasError",
         "st.interpIdle":        "status.interpIdle",
@@ -401,6 +378,11 @@ STATUS_BINDS = {
         "feedLed":              "backend.feedLedState",
         "singleBlock":          "backend.singleBlockEnabled",
         "blockDelete":          "backend.blockDelete",
+        "isflood":               "backend.flood",
+        "ismist":               "backend.mist",
+        "--- 坐标系 ---":       "",
+        "currentIndex":         "backend.currentIndex",
+        "isMachineCoord":       "backend.isMachineCoordActive",        
     },
 
     "FlashLED": {"_inherit":           "LED",

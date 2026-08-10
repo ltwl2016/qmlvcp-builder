@@ -26,6 +26,7 @@ _FILE_MAP = {
     "HalInputMonitor":     "HalInputMonitor.qml",
     "ImageButton":          "ImageButton.qml",
     "JOGButton":            "JOGButton.qml",
+    "ToggleButton":         "ToggleButton.qml",
     "SpriteButton":         "SpriteButton.qml",
     "LED":                  "LED.qml",
     "FlashLED":             "FlashLED.qml",
@@ -43,23 +44,19 @@ _FILE_MAP = {
     "EmergencyStop":        "EmergencyStop.qml",
 }
 
-_CACHE: dict = {}
 _INDENT = "            "  # 12 spaces, 与原始模板一致
 
 
 def get_template(ctype: str) -> str:
-    """读 .qml 模板文件，加回 12 空格缩进。"""
-    if ctype not in _CACHE:
-        fname = _FILE_MAP.get(ctype)
-        if fname is None:
-            return ""
-        path = os.path.join(_TEMPLATE_DIR, fname)
-        with open(path, "r", encoding="utf-8") as f:
-            raw = f.read()
-        # 每行加 12 空格缩进
-        lines = raw.strip("\n").split("\n")
-        tmpl = "\n".join(_INDENT + ln if ln else "" for ln in lines) + "\n"
-        _CACHE[ctype] = tmpl
-    return _CACHE[ctype]
+    """读 .qml 模板文件，加回 12 空格缩进。每次读取最新文件，不使用缓存。"""
+    fname = _FILE_MAP.get(ctype)
+    if fname is None:
+        return ""
+    path = os.path.join(_TEMPLATE_DIR, fname)
+    with open(path, "r", encoding="utf-8") as f:
+        raw = f.read()
+    # 每行加 12 空格缩进
+    lines = raw.strip("\n").split("\n")
+    return "\n".join(_INDENT + ln if ln else "" for ln in lines) + "\n"
 
 from .control_defs import CONTROLS

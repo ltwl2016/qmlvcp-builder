@@ -6,4 +6,5 @@ Rectangle {
     color: "$bgColor"
     border.color: "$borderC"
     border.width: $borderW
+    $extraQml
 }

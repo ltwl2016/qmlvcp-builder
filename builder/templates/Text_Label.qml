@@ -13,5 +13,6 @@ Rectangle {
         font.pixelSize: $fontSize
         color: "$color"
         verticalAlignment: Text.AlignVCenter
+        $extraQml
     }
 }

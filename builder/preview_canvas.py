@@ -19,6 +19,7 @@ import os
 from PyQt5.QtCore import Qt, QTimer, pyqtSignal, QRectF, QPoint, QRect
 from PyQt5.QtGui import QPainter, QPixmap, QColor, QPen, QFont, QFontMetrics
 from PyQt5.QtWidgets import QLabel, QComboBox, QCompleter, QWidget
+from lang import Tr
 
 class SelectionRect:
     """画布上选中的控件框。"""
@@ -323,7 +324,7 @@ class PreviewCanvas(QLabel):
                 painter.fillRect(rect, col)
                 painter.setPen(QPen(QColor(200,200,200), 1))
                 painter.drawRect(rect)
-                painter.drawText(rect.x()+5, rect.y()+22, "输入框" if ctype=="MachTextInput" else "MDI")
+                painter.drawText(rect.x()+5, rect.y()+22, Tr.t("control_defs.s21_9b6425", "Input") if ctype=="MachTextInput" else "MDI")
             elif ctype == "Rectangle" and c.get("canvas"):
                 bg = c.get("bgColor","") or "#2d3040"
                 op = c.get("opacity",100)/100.0
@@ -332,7 +333,7 @@ class PreviewCanvas(QLabel):
                 painter.fillRect(rect, col)
                 painter.setPen(QPen(QColor("#666"), 1, Qt.DashLine))
                 painter.drawRect(rect)
-                painter.drawText(rect.x()+8, rect.y()+22, "画布")
+                painter.drawText(rect.x()+8, rect.y()+22, Tr.t("_sort_key.s10_4d7f93", "Canvas"))
             elif ctype == "Rectangle":
                 bg = c.get("bgColor","") or "#282d32"
                 op = c.get("opacity",100)/100.0
@@ -344,7 +345,7 @@ class PreviewCanvas(QLabel):
                     bcol = QColor(bc) if QColor.isValidColor(bc) else QColor("#555")
                     painter.setPen(QPen(bcol, bw))
                     painter.drawRect(rect)
-                label = "容器" if c.get("container") else "面板"
+                label = Tr.t("controls.s39_22c799", "Container") if c.get("container") else Tr.t("_sort_key.s12_cd6f79", "Panel")
                 painter.setPen(QPen(QColor(150,150,160), 1))
                 painter.drawText(rect.x()+5, rect.y()+20, label)
             elif ctype == "GCodeGraphics":
@@ -355,7 +356,7 @@ class PreviewCanvas(QLabel):
                 painter.fillRect(rect, col)
                 painter.setPen(QPen(QColor(80,80,100), 1))
                 painter.drawRect(rect)
-                painter.drawText(rect.x()+5, rect.y()+25, "3D刀路")
+                painter.drawText(rect.x()+5, rect.y()+25, Tr.t("_sort_key.s13_e2f4b1", "3D Toolpath"))
             elif ctype == "Image":
                 if pm and not pm.isNull():
                     painter.drawPixmap(rect.x(), rect.y(), pm.scaled(rect.width(), rect.height(), Qt.KeepAspectRatio, Qt.SmoothTransformation))
@@ -363,7 +364,7 @@ class PreviewCanvas(QLabel):
                     painter.fillRect(rect, QColor(40,40,60))
                     painter.setPen(QPen(QColor(150,150,180), 1))
                     painter.drawRect(rect)
-                    painter.drawText(rect.x()+4, rect.y()+14, "静态图")
+                    painter.drawText(rect.x()+4, rect.y()+14, Tr.t("_sort_key.s14_8d2d98", "Static image"))
             else:
                 bg = c.get("bgColor","") or "#3c3c3c"
                 op = c.get("opacity",100)/100.0

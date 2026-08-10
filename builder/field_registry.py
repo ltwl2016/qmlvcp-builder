@@ -148,7 +148,7 @@ def _widget_factories():
         elif kind == "jog_action_combo":
             w = QComboBox()
             w.setEditable(True)
-            w.setMaximumWidth(260)
+            #w.setMaximumWidth(260)
             w.addItems(["", "--- JOG ---",
                 "JOG_X+", "JOG_X-", "JOG_Y+", "JOG_Y-",
                 "JOG_Z+", "JOG_Z-", "JOG_A+", "JOG_A-",
@@ -162,7 +162,7 @@ def _widget_factories():
         elif kind == "action_combo":
             w = QComboBox()
             w.setEditable(True)
-            w.setMaximumWidth(260)
+            #w.setMaximumWidth(260)
             w.addItems(["","cmd.homeAll","cmd.modeManual","cmd.modeAuto",
                         "cmd.spindleOn","cmd.spindleOff","cmd.emergencyStop",
                         "cmd.toolTable","cmd.programRun","cmd.programPause",
@@ -174,7 +174,7 @@ def _widget_factories():
         elif kind == "bind_combo":
             w = QComboBox()
             w.setEditable(True)
-            w.setMaximumWidth(260)
+            #w.setMaximumWidth(260)
             w.addItems(["",
                 "backend.displayToolX","backend.displayToolY","backend.displayToolZ",
                 "backend.displayToolA","backend.displayToolB","backend.displayToolC",
@@ -192,12 +192,12 @@ def _widget_factories():
             w = QComboBox()
             w.setEditable(True)
             w.addItems(opts.get("options", ["true", "false"]))
-            w.setMaximumWidth(260)
+            w.setMaximumWidth(280)
             _setup_search(w)
             return w
         elif kind == "int":
             w = QSpinBox()
-            w.setMaximumWidth(100)
+            w.setMaximumWidth(260)
             w.setRange(rng[0], rng[1])
             return w
         elif kind == "float":
